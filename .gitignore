@@ -42,5 +42,8 @@ Thumbs.db
 logs/
 pnpm-debug.log*
 
+# Playwright MCP session artifacts
+.playwright-mcp/
+
 # Archives (built packages)
 *.tgz
