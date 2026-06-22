@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Build output
+dist/
+.turbo/
+*.tsbuildinfo
+.vite/
+
+# Test coverage
+coverage/
+
+# Database files
+*.db
+
+# Environment variables (contains secrets — never commit)
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+pnpm-debug.log*
+
+# Archives (built packages)
+*.tgz

@@ -1,0 +1,23 @@
+{
+  "name": "@tap/adapter-openapi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenAPI 2.0/3.x adapter — produces CanonicalApiModel",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "lint": "biome check",
+    "test": "vitest run",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@tap/contracts-common": "workspace:*",
+    "@tap/canonical-api-model": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

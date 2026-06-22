@@ -1,0 +1,35 @@
+{
+  "name": "tap",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test Automation Platform — REST API 自动化测试平台",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:fixture": "pnpm --filter hermetic-fixture-server dev",
+    "build": "turbo run build",
+    "build:web": "pnpm --filter web build",
+    "check": "turbo run check",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint:biome": "biome check .",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.28.0",
+    "@biomejs/biome": "^2.1.0",
+    "lefthook": "^1.10.0",
+    "turbo": "^2.5.0",
+    "typescript": "catalog:"
+  }
+}

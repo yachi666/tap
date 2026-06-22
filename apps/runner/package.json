@@ -1,0 +1,27 @@
+{
+  "name": "@tap/runner",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TAP Runner — executes HTTP tests in isolated process",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx --watch src/index.ts",
+    "check": "tsc --noEmit",
+    "lint": "biome check",
+    "test": "vitest run",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@tap/contracts-common": "workspace:*",
+    "@tap/canonical-api-model": "workspace:*",
+    "@tap/test-dsl": "workspace:*",
+    "@tap/runner-protocol": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
