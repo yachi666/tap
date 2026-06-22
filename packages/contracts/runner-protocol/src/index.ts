@@ -1,5 +1,5 @@
 /**
- * @tap/runner-protocol — Runner Protocol v1
+ * @sketch-test/runner-protocol — Runner Protocol v1
  *
  * Defines everything the Runner and Control Plane need to agree on:
  * - ExecutionPlan: the immutable, compiled plan the Runner executes.
@@ -23,12 +23,12 @@ import {
   InstantSchema,
   SemanticVersionSchema,
   SideEffectLevelSchema,
-} from '@tap/contracts-common';
+} from '@sketch-test/contracts-common';
 import { z } from 'zod';
 
 // ─── Schema Version ─────────────────────────────────────────────
 
-export const RUNNER_PROTOCOL_VERSION = 'tap.runner-protocol/v1';
+export const RUNNER_PROTOCOL_VERSION = 'sketch-test.runner-protocol/v1';
 
 // ─── Execution Plan ─────────────────────────────────────────────
 

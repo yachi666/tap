@@ -1,5 +1,5 @@
 {
-  "name": "@tap/canonical-api-model",
+  "name": "@sketch-test/canonical-api-model",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tap/contracts-common": "workspace:*",
+    "@sketch-test/contracts-common": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

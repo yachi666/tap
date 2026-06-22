@@ -9,14 +9,14 @@ import { describe, expect, test } from 'vitest';
 import { type CanonicalApiModel, CanonicalApiModelSchema } from '../index';
 
 const VALID_FIXTURE: CanonicalApiModel = {
-  schemaVersion: 'tap.canonical-api/v1',
+  schemaVersion: 'sketch-test.canonical-api/v1',
   metadata: {
     sourceId: 'openapi-orders-v2',
     sourceType: 'openapi',
     sourceLabel: 'orders-openapi.yaml',
     sourceVersion: '2.3.1',
     sourceHash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
-    parserName: '@tap/adapter-openapi',
+    parserName: '@sketch-test/adapter-openapi',
     parserVersion: '0.1.0',
     ingestedAt: '2026-06-21T10:00:00.000Z',
   },

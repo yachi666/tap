@@ -1,6 +1,6 @@
-# TAP Domain Glossary
+# SketchTest Domain Glossary
 
-> Test Automation Platform — REST API 自动化测试平台
+> SketchTest — REST API 自动化测试平台
 
 ## Core Entities
 
@@ -41,7 +41,7 @@
 
 ## Business Processes
 
-> TAP 平台支撑的核心业务流程列表。每个流程对应一个可复用、可版本化的多接口 Workflow。
+> SketchTest 平台支撑的核心业务流程列表。每个流程对应一个可复用、可版本化的多接口 Workflow。
 
 | # | 业务流程 | 涉及接口 | 关键变量传递 | 副作用等级 |
 |---|---------|---------|-------------|-----------|

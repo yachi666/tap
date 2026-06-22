@@ -1,5 +1,5 @@
 /**
- * @tap/adapter-openapi — OpenAPI to CanonicalApiModel Adapter
+ * @sketch-test/adapter-openapi — OpenAPI to CanonicalApiModel Adapter
  *
  * Converts OpenAPI 2.0 / 3.0 / 3.1 specs into the platform's unified
  * CanonicalApiModel. This is an adapter seam: the output is always the
@@ -31,8 +31,8 @@ import type {
   SecurityScheme,
   SecuritySchemeType,
   Server,
-} from '@tap/canonical-api-model';
-import { CANONICAL_API_MODEL_VERSION } from '@tap/canonical-api-model';
+} from '@sketch-test/canonical-api-model';
+import { CANONICAL_API_MODEL_VERSION } from '@sketch-test/canonical-api-model';
 import type {
   ContentHash,
   Diagnostic,
@@ -41,7 +41,7 @@ import type {
   HttpStatusCode,
   Instant,
   SemanticVersion,
-} from '@tap/contracts-common';
+} from '@sketch-test/contracts-common';
 
 // ─── OpenAPI Raw Types ───────────────────────────────────────────
 
@@ -741,7 +741,7 @@ export function importOpenApi(doc: OpenApiDocument, options: OpenApiAdapterOptio
     sourceLabel: options.sourceLabel,
     sourceVersion,
     sourceHash: options.sourceHash,
-    parserName: '@tap/adapter-openapi',
+    parserName: '@sketch-test/adapter-openapi',
     parserVersion: options.parserVersion ?? ('0.1.0' as SemanticVersion),
     ingestedAt: NOW,
   };

@@ -65,16 +65,16 @@ importers:
 
   apps/runner:
     dependencies:
-      '@tap/canonical-api-model':
+      '@sketch-test/canonical-api-model':
         specifier: workspace:*
         version: link:../../packages/contracts/canonical-api-model
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../../packages/contracts/common
-      '@tap/runner-protocol':
+      '@sketch-test/runner-protocol':
         specifier: workspace:*
         version: link:../../packages/contracts/runner-protocol
-      '@tap/test-dsl':
+      '@sketch-test/test-dsl':
         specifier: workspace:*
         version: link:../../packages/contracts/test-dsl
       zod:
@@ -96,7 +96,7 @@ importers:
       '@phosphor-icons/react':
         specifier: 'catalog:'
         version: 2.1.10(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../../packages/contracts/common
       '@vitejs/plugin-react':
@@ -124,10 +124,10 @@ importers:
 
   packages/adapters/openapi:
     dependencies:
-      '@tap/canonical-api-model':
+      '@sketch-test/canonical-api-model':
         specifier: workspace:*
         version: link:../../contracts/canonical-api-model
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../../contracts/common
       zod:
@@ -143,7 +143,7 @@ importers:
 
   packages/contracts/canonical-api-model:
     dependencies:
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../common
       zod:
@@ -169,7 +169,7 @@ importers:
 
   packages/contracts/runner-protocol:
     dependencies:
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../common
       zod:
@@ -182,7 +182,7 @@ importers:
 
   packages/contracts/test-dsl:
     dependencies:
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../common
       zod:
@@ -195,7 +195,7 @@ importers:
 
   packages/contracts/workflow-dsl:
     dependencies:
-      '@tap/contracts-common':
+      '@sketch-test/contracts-common':
         specifier: workspace:*
         version: link:../common
       zod:

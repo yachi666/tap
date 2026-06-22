@@ -1,8 +1,8 @@
 {
-  "name": "tap",
+  "name": "sketch-test",
   "version": "0.0.0",
   "private": true,
-  "description": "Test Automation Platform — REST API 自动化测试平台",
+  "description": "SketchTest — REST API 自动化测试平台",
   "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=20.0.0",

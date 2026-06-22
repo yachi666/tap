@@ -1,5 +1,5 @@
 /**
- * @tap/contracts-common — Shared types for all TAP contracts.
+ * @sketch-test/contracts-common — Shared types for all SketchTest contracts.
  *
  * These types are the vocabulary of the platform: traceability, versioning,
  * diagnostics, and security classifications. Every contract package builds
@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 // ─── Identifiers ───────────────────────────────────────────────
 
-/** Stable, URL-safe identifier used across all TAP entities. */
+/** Stable, URL-safe identifier used across all SketchTest entities. */
 /** Stable, URL-safe identifier. Allows alphanumeric, hyphen, underscore, dot, slash, colon (for path params), and braces. */
 export const EntityIdSchema = z
   .string()
@@ -165,7 +165,7 @@ export type ImmutableVersionMeta = z.infer<typeof ImmutableVersionMetaSchema>;
 // ─── Variable Reference ─────────────────────────────────────────
 
 /**
- * Variables in TAP have three scopes: step, workflow, and environment.
+ * Variables in SketchTest have three scopes: step, workflow, and environment.
  * References are resolved at compile time (scope + name) and at runtime (value).
  */
 export const VariableScopeSchema = z.enum(['step', 'workflow', 'environment', 'secret']);

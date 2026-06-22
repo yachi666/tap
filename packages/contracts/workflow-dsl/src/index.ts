@@ -1,5 +1,5 @@
 /**
- * @tap/workflow-dsl — Workflow Definition DSL v1
+ * @sketch-test/workflow-dsl — Workflow Definition DSL v1
  *
  * Defines the structure of a multi-step API workflow. This is the human-editable
  * format consumed by the workflow editor. The Workflow Compiler transforms this
@@ -19,12 +19,12 @@ import {
   EntityIdSchema,
   HttpStatusCodeSchema,
   ImmutableVersionMetaSchema,
-} from '@tap/contracts-common';
+} from '@sketch-test/contracts-common';
 import { z } from 'zod';
 
 // ─── Schema Version ─────────────────────────────────────────────
 
-export const WORKFLOW_DSL_VERSION = 'tap.workflow/v1';
+export const WORKFLOW_DSL_VERSION = 'sketch-test.workflow/v1';
 
 // ─── Step Reference ─────────────────────────────────────────────
 

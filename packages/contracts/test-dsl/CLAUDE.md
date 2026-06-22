@@ -1,10 +1,10 @@
-# @tap/test-dsl
+# @sketch-test/test-dsl
 
 Defines the structure of a **single REST API test case** — the editor format consumed by the test authoring UI.
 
 ## Schema version
 
-`tap.test/v1`
+`sketch-test.test/v1`
 
 ## Core types
 
@@ -47,4 +47,4 @@ A generated or edited-but-unpublished test. **Drafts cannot enter CI suites.**
 
 ## Dependencies
 
-- `@tap/contracts-common` — EntityId, ContentHash, Instant, HTTP types, SideEffectLevel, ConfidenceLevel, VariableRef, ImmutableVersionMeta, Diagnostic
+- `@sketch-test/contracts-common` — EntityId, ContentHash, Instant, HTTP types, SideEffectLevel, ConfidenceLevel, VariableRef, ImmutableVersionMeta, Diagnostic

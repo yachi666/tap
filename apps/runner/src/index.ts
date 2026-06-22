@@ -1,5 +1,5 @@
 /**
- * @tap/runner — TAP Test Runner
+ * @sketch-test/runner — SketchTest Test Runner
  *
  * Executes HTTP tests based on compiled ExecutionPlans. The Runner is an
  * independent process deployed near the system under test. It communicates
@@ -21,7 +21,7 @@
  * - Retries record each attempt independently.
  */
 
-import type { EntityId, Instant } from '@tap/contracts-common';
+import type { EntityId, Instant } from '@sketch-test/contracts-common';
 import type {
   AssertionEvaluatedEvent,
   ExecutionPlan,
@@ -33,8 +33,8 @@ import type {
   StepFinishedEvent,
   StepStartedEvent,
   VariableExtractedEvent,
-} from '@tap/runner-protocol';
-import { RunEventSchema } from '@tap/runner-protocol';
+} from '@sketch-test/runner-protocol';
+import { RunEventSchema } from '@sketch-test/runner-protocol';
 
 // ─── Variable Store ───────────────────────────────────────────────
 

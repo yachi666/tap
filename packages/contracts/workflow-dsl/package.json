@@ -1,5 +1,5 @@
 {
-  "name": "@tap/workflow-dsl",
+  "name": "@sketch-test/workflow-dsl",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "lint": "biome check"
   },
   "dependencies": {
-    "@tap/contracts-common": "workspace:*",
+    "@sketch-test/contracts-common": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

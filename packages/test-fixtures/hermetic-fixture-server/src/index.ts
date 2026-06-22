@@ -1,11 +1,11 @@
 /**
- * Hermetic Fixture Server — Deterministic REST API for TAP testing.
+ * Hermetic Fixture Server — Deterministic REST API for sketch-test testing.
  *
  * Provides: users, auth, orders, payments with fixed clock, fixed random seed,
  * fault injection, and an OpenAPI endpoint. Used by Runner integration tests
  * and local development.
  *
- * TAP-004: M0 feasibility verification.
+ * sketch-test-004: M0 feasibility verification.
  *
  * Usage:
  *   npx tsx src/index.ts            # default port 3800
@@ -391,7 +391,7 @@ function generateOpenApiSpec(): unknown {
       title: 'Hermetic Fixture API',
       version: '1.0.0',
       description:
-        'Deterministic REST API for TAP integration testing. Supports users, auth, orders, and payments with fixed clock and seed.',
+        'Deterministic REST API for sketch-test integration testing. Supports users, auth, orders, and payments with fixed clock and seed.',
     },
     servers: [{ url: `http://127.0.0.1:${PORT}`, description: 'Fixture Server' }],
     paths: {

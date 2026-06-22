@@ -1,12 +1,12 @@
-# @tap/canonical-api-model
+# @sketch-test/canonical-api-model
 
-The **unified API representation** — the most important stable seam in the TAP platform.
+The **unified API representation** — the most important stable seam in the SketchTest platform.
 
 Every API source adapter (OpenAPI, RAML, code discovery) **MUST** produce this model. Every consumer (test generation, workflow compiler, API browser) **ONLY** depends on this model, never on adapter-specific formats.
 
 ## Schema version
 
-`tap.canonical-api/v1`
+`sketch-test.canonical-api/v1`
 
 ## Structure
 
@@ -37,7 +37,7 @@ CanonicalApiModel
 
 ## Dependencies
 
-- `@tap/contracts-common` — EntityId, ContentHash, Instant, Diagnostic, HTTP types, ImmutableVersionMeta
+- `@sketch-test/contracts-common` — EntityId, ContentHash, Instant, Diagnostic, HTTP types, ImmutableVersionMeta
 
 ## Golden tests
 
@@ -45,6 +45,6 @@ Run: `vitest run` — serializes schemas to JSON and compares against `__tests__
 
 ## When to modify
 
-- **Add a field**: Check all adapters (currently only `@tap/openapi-adapter`) and all consumers (test generation, workflow compiler). Update golden test snapshots.
+- **Add a field**: Check all adapters (currently only `@sketch-test/adapter-openapi`) and all consumers (test generation, workflow compiler). Update golden test snapshots.
 - **Change a field type**: This is a **breaking change**. Coordinate with all downstream packages and schedule a contract version bump.
 - **Add a new top-level entity**: Follow the Endpoint pattern — stable id, source locations, immutability.

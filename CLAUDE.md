@@ -1,4 +1,4 @@
-# TAP — Test Automation Platform
+# SketchTest
 
 > REST API 自动化测试平台 · pnpm monorepo · TypeScript strict
 
@@ -22,18 +22,18 @@ pnpm clean                 # Remove all dist/ directories
 ## Monorepo map
 
 ```
-tap/
+sketch-test/
 ├── apps/
 │   ├── web/                    # React 19 + Vite 6 — workflow editor, run timeline
 │   ├── control-plane/          # NestJS + Fastify (empty skeleton — WIP)
 │   └── runner/                 # Independent Node.js process — executes HTTP tests
 ├── packages/
 │   ├── contracts/              # 5 shared, versioned Zod contracts (THE stable seams)
-│   │   ├── common/             #   @tap/contracts-common — EntityId, diagnostics, HTTP types
-│   │   ├── canonical-api-model/#   @tap/canonical-api-model — unified API representation
-│   │   ├── runner-protocol/    #   @tap/runner-protocol — ExecutionPlan, RunEvents, lifecycle
-│   │   ├── test-dsl/           #   @tap/test-dsl — TestDefinition, assertions, extraction
-│   │   └── workflow-dsl/       #   @tap/workflow-dsl — WorkflowDefinition, steps, teardown
+│   │   ├── common/             #   @sketch-test/contracts-common — EntityId, diagnostics, HTTP types
+│   │   ├── canonical-api-model/#   @sketch-test/canonical-api-model — unified API representation
+│   │   ├── runner-protocol/    #   @sketch-test/runner-protocol — ExecutionPlan, RunEvents, lifecycle
+│   │   ├── test-dsl/           #   @sketch-test/test-dsl — TestDefinition, assertions, extraction
+│   │   └── workflow-dsl/       #   @sketch-test/workflow-dsl — WorkflowDefinition, steps, teardown
 │   ├── adapters/
 │   │   └── openapi/            # OpenAPI → CanonicalApiModel adapter
 │   └── test-fixtures/
@@ -67,7 +67,7 @@ tap/
 - All contracts use **Zod schemas** for runtime validation — types are derived with `z.infer<typeof Schema>`.
 - Exported schemas use the `Schema` suffix (e.g., `EndpointSchema`). Inferred types use the plain name (`Endpoint`).
 - Every contract file starts with a JSDoc block stating the schema version, purpose, and invariants.
-- Packages import from `@tap/contracts-common` for shared primitives (EntityId, ContentHash, Instant, etc.).
+- Packages import from `@sketch-test/contracts-common` for shared primitives (EntityId, ContentHash, Instant, etc.).
 
 ### Contracts as stable seams
 - The five `packages/contracts/*` packages are the **most important stable seams** in the platform.
@@ -103,7 +103,7 @@ Use the canonical terms from [CONTEXT.md](CONTEXT.md). Key distinctions:
 ## Testing
 
 - **Unit tests**: `vitest run` per package — fast, no external dependencies.
-- **Golden tests**: contracts packages have golden tests (`__tests__/golden.test.ts`) that serialize Zod output to JSON and compare against checked-in snapshots.
+- **Golden tests**: the canonical-api-model contract package has golden tests (`__tests__/golden.test.ts`) that serialize Zod output to JSON and compare against checked-in snapshots (remaining contract packages in progress).
 - **Integration tests**: use the Hermetic Fixture Server (`packages/test-fixtures/hermetic-fixture-server`). It provides a deterministic REST API (users, auth, orders, payments) with fixed clock, fixed random seed, and fault injection. Start with `pnpm dev:fixture`.
 - **Fault injection**: Set `FAULT_MODE=timeout|500|slow` and `FAULT_TARGET=/api/payments` to inject faults into specific endpoints.
 
@@ -111,7 +111,7 @@ Use the canonical terms from [CONTEXT.md](CONTEXT.md). Key distinctions:
 
 Per [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md), we are in M0. Delivered so far:
 - ✅ Monorepo setup with pnpm workspace, TypeScript strict, Biome, Vitest, Turbo
-- ✅ 5 contract packages with Zod schemas and golden tests
+- ✅ 5 contract packages with Zod schemas (golden tests for canonical-api-model; remaining in progress)
 - ✅ OpenAPI → CanonicalApiModel adapter
 - ✅ Runner with HTTP execution, assertion evaluation, variable extraction, redaction
 - ✅ Hermetic Fixture Server with 8 business process scenarios (BP-01 through BP-08)

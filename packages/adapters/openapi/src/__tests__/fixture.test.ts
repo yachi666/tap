@@ -6,7 +6,7 @@
  * with correct endpoint counts, schema references, and diagnostics.
  */
 
-import { CanonicalApiModelSchema } from '@tap/canonical-api-model';
+import { CanonicalApiModelSchema } from '@sketch-test/canonical-api-model';
 import { describe, expect, test } from 'vitest';
 import { importOpenApi, type OpenApiDocument } from '../index';
 
@@ -17,7 +17,7 @@ const FIXTURE_OPENAPI: OpenApiDocument = {
   info: {
     title: 'Hermetic Fixture API',
     version: '1.0.0',
-    description: 'Deterministic REST API for TAP integration testing.',
+    description: 'Deterministic REST API for sketch-test integration testing.',
   },
   servers: [{ url: 'http://127.0.0.1:3800', description: 'Fixture Server' }],
   paths: {
@@ -331,7 +331,7 @@ describe('OpenAPI Adapter', () => {
 
   test('metadata includes parser info', () => {
     expect(result.model!.metadata.sourceType).toBe('openapi');
-    expect(result.model!.metadata.parserName).toBe('@tap/adapter-openapi');
+    expect(result.model!.metadata.parserName).toBe('@sketch-test/adapter-openapi');
     expect(result.model!.metadata.sourceLabel).toBe('fixture-openapi.yaml');
     expect(result.model!.metadata.sourceVersion).toBe('1.0.0');
   });

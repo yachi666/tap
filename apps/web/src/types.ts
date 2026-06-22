@@ -1,4 +1,4 @@
-import type { EntityId, HttpMethod } from '@tap/contracts-common';
+import type { EntityId, HttpMethod } from '@sketch-test/contracts-common';
 
 // ─── Navigation ─────────────────────────────────────────────────
 

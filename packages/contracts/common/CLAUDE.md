@@ -1,6 +1,6 @@
-# @tap/contracts-common
+# @sketch-test/contracts-common
 
-Shared Zod schema primitives used by every other TAP contract package. This is the **lowest-level contract** in the platform — changes here cascade everywhere.
+Shared Zod schema primitives used by every other sketch-test contract package. This is the **lowest-level contract** in the platform — changes here cascade everywhere.
 
 ## Exports
 
@@ -27,7 +27,7 @@ Shared Zod schema primitives used by every other TAP contract package. This is t
 ## Usage
 
 ```typescript
-import { EntityIdSchema, type EntityId } from '@tap/contracts-common';
+import { EntityIdSchema, type EntityId } from '@sketch-test/contracts-common';
 ```
 
 Always export schemas with the `Schema` suffix. Derive types with `z.infer<typeof Schema>`.

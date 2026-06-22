@@ -6,7 +6,7 @@
  * against the Hermetic Fixture Server are separate.
  */
 
-import type { FrozenStep } from '@tap/runner-protocol';
+import type { FrozenStep } from '@sketch-test/runner-protocol';
 import { describe, expect, test } from 'vitest';
 import {
   createVariableStore,

@@ -270,7 +270,7 @@ ApiModel
 ### 6.1 测试定义示例
 
 ```yaml
-schemaVersion: tap.test/v1
+schemaVersion: sketch-test.test/v1
 name: 创建用户
 sideEffect: cleanup-required
 request:
@@ -294,7 +294,7 @@ extract:
 ### 6.2 流程定义示例
 
 ```yaml
-schemaVersion: tap.workflow/v1
+schemaVersion: sketch-test.workflow/v1
 name: 用户下单并支付
 steps:
   - id: create-user

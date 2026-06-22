@@ -1,5 +1,5 @@
 /**
- * @tap/test-dsl — Test Definition DSL v1
+ * @sketch-test/test-dsl — Test Definition DSL v1
  *
  * Defines the structure of a single REST API test case: request, assertions,
  * variable extraction, and side-effect classification. This is the editor
@@ -24,12 +24,12 @@ import {
   MediaTypeSchema,
   SemanticVersionSchema,
   SideEffectLevelSchema,
-} from '@tap/contracts-common';
+} from '@sketch-test/contracts-common';
 import { z } from 'zod';
 
 // ─── Schema Version ─────────────────────────────────────────────
 
-export const TEST_DSL_VERSION = 'tap.test/v1';
+export const TEST_DSL_VERSION = 'sketch-test.test/v1';
 
 // ─── Authentication ─────────────────────────────────────────────
 

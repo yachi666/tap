@@ -1,10 +1,10 @@
-# @tap/runner-protocol
+# @sketch-test/runner-protocol
 
 Defines everything the **Runner** and **Control Plane** must agree on to communicate.
 
 ## Schema version
 
-`tap.runner-protocol/v1`
+`sketch-test.runner-protocol/v1`
 
 ## Three concerns
 
@@ -63,4 +63,4 @@ orphaned → inconclusive / queued
 
 ## Dependencies
 
-- `@tap/contracts-common` — EntityId, ContentHash, Instant, HTTP types, SideEffectLevel, VariableRef
+- `@sketch-test/contracts-common` — EntityId, ContentHash, Instant, HTTP types, SideEffectLevel, VariableRef

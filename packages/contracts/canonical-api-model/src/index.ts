@@ -1,5 +1,5 @@
 /**
- * @tap/canonical-api-model — Unified API Model v1
+ * @sketch-test/canonical-api-model — Unified API Model v1
  *
  * This is the platform's most important stable seam. Every API source adapter
  * (OpenAPI, RAML, Code Discovery) MUST produce this model. Consumers
@@ -23,13 +23,13 @@ import {
   MediaTypeSchema,
   SemanticVersionSchema,
   SourceLocationSchema,
-} from '@tap/contracts-common';
+} from '@sketch-test/contracts-common';
 import { z } from 'zod';
 
 // ─── Schema Version ─────────────────────────────────────────────
 
 /** Current schema version of the canonical model. */
-export const CANONICAL_API_MODEL_VERSION = 'tap.canonical-api/v1';
+export const CANONICAL_API_MODEL_VERSION = 'sketch-test.canonical-api/v1';
 
 // ─── Parameter Location ────────────────────────────────────────
 

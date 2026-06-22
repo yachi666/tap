@@ -1,15 +1,15 @@
-# @tap/workflow-dsl
+# @sketch-test/workflow-dsl
 
 Defines the structure of a **multi-step API workflow** — the human-editable format consumed by the workflow editor in the web app.
 
 ## Schema version
 
-`tap.workflow/v1`
+`sketch-test.workflow/v1`
 
 ## Core types
 
 ### WorkflowDefinition
-The editor document. The **Workflow Compiler** transforms this into an `ExecutionPlan` (from `@tap/runner-protocol`) at publish time.
+The editor document. The **Workflow Compiler** transforms this into an `ExecutionPlan` (from `@sketch-test/runner-protocol`) at publish time.
 - `steps`: Sequential WorkflowStep array (1–50, V1 hard limit)
 - `teardown`: Optional teardown phase with configurable strategy
 
@@ -56,5 +56,5 @@ Compiler output: valid/invalid, unresolved variables, step warnings.
 
 ## Dependencies
 
-- `@tap/contracts-common` — EntityId, ContentHash, Instant, VariableRef, ImmutableVersionMeta, Diagnostic
-- Compiles to `@tap/runner-protocol` ExecutionPlan
+- `@sketch-test/contracts-common` — EntityId, ContentHash, Instant, VariableRef, ImmutableVersionMeta, Diagnostic
+- Compiles to `@sketch-test/runner-protocol` ExecutionPlan
