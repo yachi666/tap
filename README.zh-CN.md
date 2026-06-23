@@ -210,6 +210,7 @@ Fixture Server 内置 8 个业务流程场景，用于流程测试：
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | 基于里程碑的任务拆分 |
 | [docs/TECH_STACK_RESEARCH.md](docs/TECH_STACK_RESEARCH.md) | 技术选型研究笔记 |
 | [CLAUDE.md](CLAUDE.md) | AI 助手指令 |
+| [docs/ARCHITECTURE_REVIEW.md](docs/ARCHITECTURE_REVIEW.md) | 架构评审：前后端分离与 2025–2026 行业最佳实践 |
 
 ---
 

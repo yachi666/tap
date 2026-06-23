@@ -210,6 +210,7 @@ Per our [implementation plan](docs/IMPLEMENTATION_PLAN.md):
 | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Milestone-based task breakdown |
 | [docs/TECH_STACK_RESEARCH.md](docs/TECH_STACK_RESEARCH.md) | Technology evaluation notes |
 | [CLAUDE.md](CLAUDE.md) | AI assistant instructions |
+| [docs/ARCHITECTURE_REVIEW.md](docs/ARCHITECTURE_REVIEW.md) | Architecture review against 2025–2026 industry best practices (中文) |
 
 ---
 
