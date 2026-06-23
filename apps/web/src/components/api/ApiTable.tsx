@@ -7,7 +7,8 @@ import {
   Warning,
 } from '@phosphor-icons/react';
 import { useEffect, useMemo, useState } from 'react';
-import type { ApiEndpoint, ApiVersionInfo, EndpointDetail, SchemaDisplayNode } from '../../types';
+import type { ApiEndpoint, ApiVersionInfo } from '../../types';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { MethodBadge } from '../shared/MethodBadge';
 import { SearchField } from '../shared/SearchField';
 import { FilterDropdown } from './FilterDropdown';
@@ -15,10 +16,6 @@ import { FilterDropdown } from './FilterDropdown';
 interface ApiTableProps {
   endpoints: ApiEndpoint[];
   activeVersion: ApiVersionInfo | null;
-  /** Resolved detail objects keyed by endpoint ID. (reserved for inline detail expansion) */
-  _details: Record<string, EndpointDetail>;
-  /** Schema registry. (reserved for inline schema preview) */
-  _schemas: Record<string, SchemaDisplayNode>;
   /** Maps endpoint ID → its workflow references. */
   usedInWorkflows: Record<string, string[]>;
   onViewDetail: (endpointId: string) => void;
@@ -34,8 +31,6 @@ interface ApiTableProps {
 export function ApiTable({
   endpoints,
   activeVersion,
-  _details,
-  _schemas,
   usedInWorkflows,
   onViewDetail,
   onEdit,
@@ -46,6 +41,7 @@ export function ApiTable({
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [coverageRange, setCoverageRange] = useState<[number, number]>([0, 100]);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ApiEndpoint | null>(null);
 
   // Close menu on outside click
   useEffect(() => {
@@ -248,9 +244,7 @@ export function ApiTable({
                             className="row-menu-item row-menu-item--danger"
                             onClick={() => {
                               setMenuOpen(null);
-                              if (window.confirm(`确定要删除接口 ${api.method} ${api.path} 吗？`)) {
-                                onDelete(api.id);
-                              }
+                              setDeleteTarget(api);
                             }}
                           >
                             <Trash size={14} />
@@ -266,6 +260,22 @@ export function ApiTable({
           ))
         )}
       </div>
+
+      {/* Confirm dialog for delete */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="删除接口"
+        message={
+          deleteTarget ? `确定要删除接口 ${deleteTarget.method} ${deleteTarget.path} 吗？` : ''
+        }
+        variant="danger"
+        confirmLabel="删除"
+        onConfirm={() => {
+          if (deleteTarget) onDelete?.(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </section>
   );
 }

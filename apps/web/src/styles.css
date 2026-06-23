@@ -3527,7 +3527,7 @@ textarea:focus-visible {
 }
 
 /* Small button variant */
-/* biome-ignore lint/style/noDescendingSpecificity: shared utility, overrides handled by cascade */
+/* biome-ignore lint/style/noDescendingSpecificity: must follow .env-card-actions override */
 .button--sm {
   padding: 4px 10px;
   font-size: 0.6rem;
@@ -5114,7 +5114,7 @@ textarea:focus-visible {
 }
 
 /* ─── Small button variant ─────── */
-/* biome-ignore lint/style/noDescendingSpecificity: shared utility, overrides handled by cascade */
+/* biome-ignore lint/style/noDescendingSpecificity: must follow .env-card-actions override */
 .button--sm {
   padding: 4px 10px;
   font-size: 0.72rem;

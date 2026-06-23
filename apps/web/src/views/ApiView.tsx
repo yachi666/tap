@@ -246,8 +246,6 @@ export function ApiView({
       <ApiTable
         endpoints={endpoints}
         activeVersion={activeVersion}
-        _details={details}
-        _schemas={schemas}
         usedInWorkflows={usedInWorkflows}
         onViewDetail={handleViewDetail}
         onEdit={handleEdit}
