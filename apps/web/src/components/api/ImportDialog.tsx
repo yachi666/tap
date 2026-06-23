@@ -67,8 +67,6 @@ export function ImportDialog({ open, onClose, onImport }: ImportDialogProps) {
     }
   }, [open]);
 
-  if (!open) return null;
-
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,6 +146,8 @@ export function ImportDialog({ open, onClose, onImport }: ImportDialogProps) {
     source === 'file' ? fileName !== '' && detectionResult !== null : url.trim() !== '';
 
   const isPostman = detectionResult?.format === 'postman-collection';
+
+  if (!open) return null;
 
   return (
     <div
