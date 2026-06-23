@@ -4786,35 +4786,259 @@ textarea:focus-visible {
   font-size: 0.75rem;
 }
 
+/* ─── Source Selector ─────── */
+
+.source-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--paper-warm);
+  border: 1px solid var(--border);
+  border-radius: 8px 14px 9px 12px;
+}
+
+.source-select {
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+}
+
+.source-select:hover {
+  color: var(--brown);
+}
+
+.source-manage-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.source-manage-btn:hover {
+  background: var(--brown-soft);
+  color: var(--brown);
+}
+
+.source-baseurl {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* ─── Manage Sources Dialog ─────── */
+
+.manage-sources-dialog {
+  width: min(560px, 100%);
+}
+
+.manage-sources-dialog .manage-source-heading {
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.manage-source-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  transition: background-color 120ms ease;
+}
+
+.manage-source-item:hover {
+  background: var(--brown-soft);
+}
+
+.manage-source-item strong {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.manage-source-item small {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.manage-source-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.manage-source-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.manage-source-actions button:hover {
+  background: var(--brown-soft);
+  color: var(--brown);
+}
+
+.manage-source-actions .delete-btn:hover {
+  background: var(--brick-soft);
+  color: var(--brick);
+}
+
+.manage-source-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 /* ─── Endpoint detail panel (slide-over) ─────── */
+
+/* ─── Body scroll lock (when dialog is open) ─────── */
+
+.body--modal-open {
+  overflow: hidden;
+}
+
+/* ─── Generic Backdrop Overlay (used by sub-dialogs: clipboard, schema generator) ─────── */
 
 .endpoint-detail-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
-  background: rgba(0, 0, 0, 0.25);
-  display: flex;
-  justify-content: flex-end;
+  z-index: 70;
+  background: rgba(30, 27, 26, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-.endpoint-detail-panel {
-  width: 560px;
-  max-width: 90vw;
-  height: 100vh;
-  overflow-y: auto;
-  background: var(--white);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  animation: slideInRight 0.2s ease-out;
+/* ─── Endpoint Dialog Overlay ─────── */
+
+.endpoint-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 32px 22px;
+  background: rgba(30, 27, 26, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayFadeIn 0.18s ease-out;
 }
 
-@keyframes slideInRight {
+@keyframes overlayFadeIn {
   from {
-    transform: translateX(100%);
+    opacity: 0;
   }
   to {
-    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.endpoint-dialog-overlay--closing {
+  animation: overlayFadeOut 0.12s ease-in forwards;
+}
+
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ─── Endpoint Dialog Card ─────── */
+
+.endpoint-dialog {
+  width: min(740px, 94vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--border-dark);
+  border-radius: 12px 20px 13px 18px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.07),
+    0 12px 40px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: dialogEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center center;
+}
+
+.endpoint-dialog--closing {
+  animation: dialogExit 0.12s ease-in forwards;
+}
+
+@keyframes dialogEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dialogExit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .endpoint-dialog-overlay,
+  .endpoint-dialog-overlay--closing,
+  .endpoint-dialog,
+  .endpoint-dialog--closing {
+    animation-duration: 0.01ms;
+  }
+  .endpoint-dialog {
+    animation: none;
   }
 }
 
@@ -5026,19 +5250,68 @@ textarea:focus-visible {
   letter-spacing: 0.03em;
 }
 
-.endpoint-detail-header {
+/* ─── Dialog Title Bar ─────── */
+
+.endpoint-dialog-titlebar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 20px 24px 12px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border-soft);
+  background: var(--paper-warm);
+  flex-shrink: 0;
 }
 
-.endpoint-detail-method {
+.endpoint-dialog-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.endpoint-dialog-titlebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--brown-soft);
+  color: var(--brown);
+  flex-shrink: 0;
+}
+
+.endpoint-dialog-titlebar h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.endpoint-dialog-titlebar-right {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Dialog Identity Section (method + path + summary + description) ─────── */
+
+.endpoint-dialog-identity {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.endpoint-dialog-identity .endpoint-detail-method {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .endpoint-detail-path {
@@ -5051,39 +5324,27 @@ textarea:focus-visible {
   border: 1px solid var(--border);
 }
 
-.endpoint-detail-header h3 {
+.endpoint-dialog-identity h3 {
   margin: 6px 0 4px;
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 600;
 }
 
-.endpoint-detail-header p {
+.endpoint-dialog-identity p {
   margin: 0 0 8px;
   font-size: 0.8rem;
   color: var(--ink-soft);
   line-height: 1.5;
 }
 
-.endpoint-detail-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.endpoint-detail-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ─── Detail tabs ─────── */
+/* ─── Tabs (inside dialog) ─────── */
 
 .endpoint-detail-tabs {
   display: flex;
   border-bottom: 1px solid var(--border);
   padding: 0 24px;
+  flex-shrink: 0;
 }
 
 .endpoint-detail-tab {
@@ -5125,7 +5386,7 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
-/* ─── Detail body ─────── */
+/* ─── Dialog scrollable body ─────── */
 
 .endpoint-detail-body {
   flex: 1;
@@ -5759,14 +6020,33 @@ textarea:focus-visible {
    EDIT MODE — Form inputs, editors, row menus
    ============================================ */
 
-/* ─── Panel editing state ─────── */
-.endpoint-detail-panel--editing {
-  width: 620px;
+/* ─── Dialog Footer ─────── */
+
+.endpoint-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--paper-warm);
+  flex-shrink: 0;
+  gap: 16px;
 }
 
-.endpoint-detail-header-main {
-  flex: 1;
+.endpoint-dialog-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   min-width: 0;
+  flex: 1;
+}
+
+.endpoint-dialog-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ─── Inline method/path/summary inputs ─────── */
@@ -5846,6 +6126,10 @@ textarea:focus-visible {
 .tag-input-wrap {
   display: inline-flex;
   align-items: center;
+}
+
+.endpoint-dialog-footer .tag-input-wrap {
+  max-width: 200px;
 }
 
 .tag-input {
@@ -6511,12 +6795,6 @@ textarea:focus-visible {
 .button--danger:hover {
   background: var(--brick);
   color: var(--white);
-}
-
-/* ─── Panel footer ─────── */
-.endpoint-detail-footer {
-  padding: 12px 24px;
-  border-top: 1px solid var(--border-soft);
 }
 
 /* ─── Version badge in stats bar ─────── */
