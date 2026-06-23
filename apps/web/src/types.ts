@@ -383,7 +383,7 @@ export interface Variable {
   type: VariableType;
   /** Scope: environment-global, workflow-scoped, or step-local. */
   scope: VariableScope;
-  /** When scope is 'source', which ApiSource this variable belongs to. */
+  /** When scope is 'environment', optionally associates this variable with a specific ApiSource for organizational grouping. */
   sourceId?: EntityId;
   /** Whether this variable contains sensitive data (always true for secrets). */
   sensitive: boolean;

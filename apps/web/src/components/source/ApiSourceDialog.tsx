@@ -63,10 +63,10 @@ export function ApiSourceDialog({ source, open, onClose, onSaved }: ApiSourceDia
     upsertApiSource({
       id: saved.id,
       name: saved.name,
-      description: saved.description,
+      description: saved.description || undefined,
       sourceLabel: saved.sourceLabel,
       sourceType: saved.sourceType,
-      defaultBaseUrl: saved.defaultBaseUrl,
+      defaultBaseUrl: saved.defaultBaseUrl || undefined,
       createdAt: saved.createdAt,
       updatedAt: saved.updatedAt,
     });

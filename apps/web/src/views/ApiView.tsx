@@ -270,7 +270,7 @@ export function ApiView({
         const newSource: ApiSource = {
           id: sourceId,
           name: config.newSourceName,
-          sourceLabel: config.fileName,
+          sourceLabel: config.fileName || 'imported-api',
           sourceType: 'openapi' as const,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

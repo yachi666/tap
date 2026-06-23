@@ -69,6 +69,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { ConfirmDialog } from './components/shared/ConfirmDialog';
 import { ApiSourceDialog } from './components/source/ApiSourceDialog';
 import {
   apiVersions,
@@ -3300,6 +3301,7 @@ export function App() {
   const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<ApiSource | null>(null);
   const [manageSourcesOpen, setManageSourcesOpen] = useState(false);
+  const [sourceToDelete, setSourceToDelete] = useState<ApiSource | null>(null);
   const [cases, setCases] = useState(initialCases);
   const [variables, setVariables] = useState<Variable[]>(() => {
     try {
@@ -3498,10 +3500,20 @@ export function App() {
     });
   }, []);
 
-  const handleDeleteSource = useCallback((sourceId: string) => {
-    deleteApiSource(sourceId);
-    setApiSources((prev) => prev.filter((s) => s.id !== sourceId));
-  }, []);
+  const handleDeleteSource = useCallback(
+    (sourceId: string) => {
+      const source = apiSources.find((s) => s.id === sourceId) ?? null;
+      setSourceToDelete(source);
+    },
+    [apiSources],
+  );
+
+  const confirmDeleteSource = useCallback(() => {
+    if (!sourceToDelete) return;
+    deleteApiSource(sourceToDelete.id);
+    setApiSources((prev) => prev.filter((s) => s.id !== sourceToDelete.id));
+    setSourceToDelete(null);
+  }, [sourceToDelete]);
 
   const handleManageSources = useCallback(() => {
     setManageSourcesOpen(true);
@@ -3855,6 +3867,20 @@ export function App() {
           </section>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={sourceToDelete !== null}
+        title="删除系统"
+        message={
+          sourceToDelete
+            ? `删除系统将同时解除相关接口和变量的关联，数据不会丢失但关联将被清除。`
+            : ''
+        }
+        variant="danger"
+        confirmLabel="删除"
+        onConfirm={confirmDeleteSource}
+        onCancel={() => setSourceToDelete(null)}
+      />
     </div>
   );
 }
