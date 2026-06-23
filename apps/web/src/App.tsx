@@ -69,6 +69,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { ApiSourceDialog } from './components/source/ApiSourceDialog';
 import {
   apiVersions,
   endpointDetails,
@@ -78,6 +79,7 @@ import {
   initialLogs,
   initialRuns,
   apiSchemas as initialSchemas,
+  apiSources as initialSources,
   initialSteps,
   initialVariables,
   makeLogs,
@@ -88,11 +90,13 @@ import {
   workflows,
 } from './data';
 import {
+  deleteApiSource,
   LS_ACTIVE_ENV_KEY,
   LS_ACTIVE_WORKFLOW_KEY,
   LS_ENVIRONMENTS_KEY,
   LS_VARIABLES_KEY,
   LS_WORKFLOW_KEY,
+  loadApiSources,
   lsGet,
   lsGetJSON,
   lsSet,
@@ -100,6 +104,7 @@ import {
 } from './lib/storage';
 import type {
   ApiEndpoint,
+  ApiSource,
   EndpointDetail,
   Environment,
   ExecutionLog,
@@ -2717,6 +2722,7 @@ function VariablesView({
   variables,
   environments,
   activeEnvironmentId,
+  sources: _sources,
   onCreate,
   onUpdate,
   onDelete,
@@ -2724,6 +2730,7 @@ function VariablesView({
   variables: Variable[];
   environments: Environment[];
   activeEnvironmentId: string;
+  sources: ApiSource[];
   onCreate: (v: Variable) => void;
   onUpdate: (v: Variable) => void;
   onDelete: (id: string) => void;
@@ -3235,6 +3242,14 @@ export function App() {
   const [apiSchemas, setApiSchemas] = useState<Record<string, SchemaDisplayNode>>(initialSchemas);
   const [apiEndpoints, setApiEndpoints] = useState<ApiEndpoint[]>(endpoints);
   const [apiDetails, setApiDetails] = useState<Record<string, EndpointDetail>>(endpointDetails);
+  const [apiSources, setApiSources] = useState<ApiSource[]>(() => {
+    const stored = loadApiSources();
+    if (stored.length > 0) return stored as ApiSource[];
+    return initialSources;
+  });
+  const [sourceDialogOpen, setSourceDialogOpen] = useState(false);
+  const [editingSource, setEditingSource] = useState<ApiSource | null>(null);
+  const [manageSourcesOpen, setManageSourcesOpen] = useState(false);
   const [cases, setCases] = useState(initialCases);
   const [variables, setVariables] = useState<Variable[]>(() => {
     try {
@@ -3418,6 +3433,30 @@ export function App() {
     [notify],
   );
 
+  // ─── ApiSource handlers ──────────────────────────────────────
+
+  const handleOpenSourceDialog = useCallback((source: ApiSource | null) => {
+    setEditingSource(source);
+    setSourceDialogOpen(true);
+  }, []);
+
+  const handleSourceSaved = useCallback((saved: ApiSource) => {
+    setApiSources((prev) => {
+      const idx = prev.findIndex((s) => s.id === saved.id);
+      if (idx >= 0) return prev.map((s) => (s.id === saved.id ? saved : s));
+      return [...prev, saved];
+    });
+  }, []);
+
+  const handleDeleteSource = useCallback((sourceId: string) => {
+    deleteApiSource(sourceId);
+    setApiSources((prev) => prev.filter((s) => s.id !== sourceId));
+  }, []);
+
+  const handleManageSources = useCallback(() => {
+    setManageSourcesOpen(true);
+  }, []);
+
   const handleDeleteEndpoint = useCallback(
     (endpointId: string) => {
       const ep = apiEndpoints.find((e) => e.id === endpointId);
@@ -3488,6 +3527,7 @@ export function App() {
   else if (view === 'apis')
     content = (
       <ApiView
+        sources={apiSources}
         endpoints={apiEndpoints}
         versions={apiVersions}
         details={apiDetails}
@@ -3499,6 +3539,7 @@ export function App() {
         onUpdate={handleUpdateEndpoint}
         onDelete={handleDeleteEndpoint}
         onCreateSchema={handleCreateSchema}
+        onManageSources={handleManageSources}
       />
     );
   else if (view === 'cases') content = <CasesView cases={cases} onGenerate={generateCases} />;
@@ -3582,6 +3623,7 @@ export function App() {
         variables={variables}
         environments={environments}
         activeEnvironmentId={activeEnvironmentId}
+        sources={apiSources}
         onCreate={(v) =>
           setVariables((prev) => {
             const next = [v, ...prev];
@@ -3640,6 +3682,128 @@ export function App() {
         <CheckCircle size={18} weight="fill" />
         {toast}
       </div>
+
+      <ApiSourceDialog
+        source={editingSource}
+        open={sourceDialogOpen}
+        onClose={() => setSourceDialogOpen(false)}
+        onSaved={handleSourceSaved}
+      />
+
+      {manageSourcesOpen ? (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setManageSourcesOpen(false);
+          }}
+        >
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="管理系统"
+            style={{ maxWidth: '560px' }}
+          >
+            <div className="modal-heading">
+              <div>
+                <span className="eyebrow">MANAGE SOURCES</span>
+                <h2>管理系统</h2>
+              </div>
+              <button
+                className="icon-button"
+                type="button"
+                onClick={() => setManageSourcesOpen(false)}
+                aria-label="关闭"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '0 24px 16px' }}>
+              <button
+                className="button button--primary button--sm"
+                type="button"
+                onClick={() => {
+                  setManageSourcesOpen(false);
+                  handleOpenSourceDialog(null);
+                }}
+              >
+                <Plus size={16} />
+                新建系统
+              </button>
+            </div>
+
+            <div className="data-table" style={{ margin: '0 24px 20px' }}>
+              <div className="data-row data-row--head">
+                <span>系统名称</span>
+                <span>来源标识</span>
+                <span>类型</span>
+                <span>操作</span>
+              </div>
+              {apiSources.length === 0 ? (
+                <div className="empty-module" style={{ border: 'none', minHeight: 100 }}>
+                  <PlugsConnected size={32} weight="duotone" />
+                  <p>暂无系统，点击上方"新建系统"创建。</p>
+                </div>
+              ) : (
+                apiSources.map((src) => (
+                  <div className="data-row" key={src.id}>
+                    <span>
+                      <strong>{src.name}</strong>
+                      {src.description ? <code>{src.description}</code> : null}
+                    </span>
+                    <span>
+                      <code>{src.sourceLabel}</code>
+                    </span>
+                    <span className="source-tag">
+                      <FileCode size={14} />{' '}
+                      {src.sourceType === 'openapi'
+                        ? 'OpenAPI'
+                        : src.sourceType === 'raml'
+                          ? 'RAML'
+                          : '手动录入'}
+                    </span>
+                    <span className="variable-actions-cell">
+                      <button
+                        className="icon-button"
+                        type="button"
+                        onClick={() => {
+                          setManageSourcesOpen(false);
+                          handleOpenSourceDialog(src);
+                        }}
+                        aria-label={`编辑 ${src.name}`}
+                        title="编辑"
+                      >
+                        <PencilSimple size={16} />
+                      </button>
+                      <button
+                        className="icon-button icon-button--danger"
+                        type="button"
+                        onClick={() => handleDeleteSource(src.id)}
+                        aria-label={`删除 ${src.name}`}
+                        title="删除"
+                      >
+                        <TrashSimple size={16} />
+                      </button>
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="button button--ghost"
+                type="button"
+                onClick={() => setManageSourcesOpen(false)}
+              >
+                关闭
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { useImportWorker } from '../hooks/useImportWorker';
 import { saveApiImport } from '../lib/storage';
 import type {
   ApiEndpoint,
+  ApiSource,
   ApiVersionDiff,
   ApiVersionInfo,
   EndpointDetail,
@@ -64,6 +65,7 @@ function detailFromEndpoint(
 }
 
 interface ApiViewProps {
+  sources: ApiSource[];
   endpoints: ApiEndpoint[];
   versions: ApiVersionInfo[];
   details: Record<string, EndpointDetail>;
@@ -76,6 +78,7 @@ interface ApiViewProps {
   onDelete: (endpointId: string) => void;
   onAddToWorkflow?: (endpointId: string) => void;
   onCreateSchema?: (schema: SchemaDisplayNode) => void;
+  onManageSources?: () => void;
 }
 
 /**
@@ -89,6 +92,7 @@ interface ApiViewProps {
  * delegating rendering to focused sub-components.
  */
 export function ApiView({
+  sources: _sources,
   endpoints,
   versions,
   details,
@@ -101,6 +105,7 @@ export function ApiView({
   onDelete,
   onAddToWorkflow,
   onCreateSchema,
+  onManageSources: _onManageSources,
 }: ApiViewProps) {
   const [importOpen, setImportOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
