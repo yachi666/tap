@@ -98,3 +98,107 @@ export function lsSetJSON(key: string, value: unknown): void {
     // Serialization failed or storage unavailable — silently ignore
   }
 }
+
+// ─── API Import persistence ───────────────────────────────────────
+
+import type { CanonicalApiModel } from '@sketch-test/canonical-api-model';
+
+const API_VERSIONS_KEY = 'sketchtest.api-versions:v1';
+const API_ENDPOINTS_KEY = 'sketchtest.api-endpoints:v1';
+
+export interface StoredApiVersion {
+  id: string;
+  sourceType: string;
+  sourceLabel: string;
+  importedAt: string;
+  endpointCount: number;
+  fileName: string;
+}
+
+export interface StoredApiEndpoint {
+  id: string;
+  method: string;
+  path: string;
+  summary: string;
+  deprecated: boolean;
+  tags?: string[];
+  versionId: string;
+  sourceLabel: string;
+}
+
+/**
+ * Persist a CanonicalApiModel to localStorage with versioned keys.
+ * Creates a version entry and appends new endpoints (skipping duplicates by id).
+ */
+export function saveApiImport(model: CanonicalApiModel): {
+  versionId: string;
+  endpointCount: number;
+} {
+  const versions = loadApiVersions();
+  const storedEndpoints = loadAllEndpoints();
+
+  const versionId = `v-${Date.now()}`;
+  const version: StoredApiVersion = {
+    id: versionId,
+    sourceType: model.metadata.sourceType,
+    sourceLabel: model.metadata.sourceLabel,
+    importedAt: new Date().toISOString(),
+    endpointCount: model.endpoints.length,
+    fileName: model.metadata.sourceLabel,
+  };
+
+  versions.push(version);
+  saveApiVersions(versions);
+
+  for (const ep of model.endpoints) {
+    const exists = storedEndpoints.find((e) => e.id === ep.id);
+    if (!exists) {
+      storedEndpoints.push({
+        id: ep.id,
+        method: ep.method,
+        path: ep.path,
+        summary: ep.summary || '',
+        deprecated: ep.deprecated,
+        tags: ep.tags,
+        versionId,
+        sourceLabel: model.metadata.sourceLabel,
+      });
+    }
+  }
+
+  saveAllEndpoints(storedEndpoints);
+
+  return { versionId, endpointCount: model.endpoints.length };
+}
+
+export function loadApiVersions(): StoredApiVersion[] {
+  try {
+    return JSON.parse(localStorage.getItem(API_VERSIONS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveApiVersions(versions: StoredApiVersion[]): void {
+  try {
+    localStorage.setItem(API_VERSIONS_KEY, JSON.stringify(versions));
+  } catch {
+    // Storage full — silently ignore
+  }
+}
+
+export function loadAllEndpoints(): StoredApiEndpoint[] {
+  try {
+    return JSON.parse(localStorage.getItem(API_ENDPOINTS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveAllEndpoints(endpoints: StoredApiEndpoint[]): void {
+  try {
+    localStorage.setItem(API_ENDPOINTS_KEY, JSON.stringify(endpoints));
+  } catch {
+    // Storage full — silently ignore
+  }
+}

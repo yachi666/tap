@@ -1,9 +1,18 @@
 import { CheckCircle, FileArrowUp, GitBranch, Plus } from '@phosphor-icons/react';
-import { useCallback, useMemo, useState } from 'react';
+import type { CanonicalApiModel } from '@sketch-test/canonical-api-model';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiTable } from '../components/api/ApiTable';
+import {
+  type ConflictResolution,
+  ConflictResolutionDialog,
+  type EndpointConflict,
+} from '../components/api/ConflictResolutionDialog';
 import { EndpointDetailPanel, type PanelMode } from '../components/api/EndpointDetailPanel';
 import { ImportDialog } from '../components/api/ImportDialog';
+import { ImportProgressBar } from '../components/api/ImportProgressBar';
 import { VersionDiffDialog } from '../components/api/VersionDiffDialog';
+import { useImportWorker } from '../hooks/useImportWorker';
+import { saveApiImport } from '../lib/storage';
 import type {
   ApiEndpoint,
   ApiVersionDiff,
@@ -98,12 +107,43 @@ export function ApiView({
   const [panelMode, setPanelMode] = useState<PanelMode>('view');
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
 
-  const activeVersion = useMemo(() => versions.find((v) => v.isActive) ?? null, [versions]);
+  // ── Import worker state ──
+
+  const {
+    startImport,
+    progress,
+    result,
+    error: importError,
+    cancel,
+    isRunning,
+  } = useImportWorker();
+  const [importedEndpoints, setImportedEndpoints] = useState<ApiEndpoint[]>([]);
+  const [importedVersions, setImportedVersions] = useState<ApiVersionInfo[]>([]);
+  const [conflicts, setConflicts] = useState<EndpointConflict[]>([]);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [importErrorMessage, setImportErrorMessage] = useState<string | null>(null);
+  const [pendingImportData, setPendingImportData] = useState<{
+    endpoints: ApiEndpoint[];
+    version: ApiVersionInfo;
+  } | null>(null);
+  const importConfigRef = useRef<ImportConfig | null>(null);
+
+  // ── Derived state ──
+
+  const allEndpoints = useMemo(
+    () => [...endpoints, ...importedEndpoints],
+    [endpoints, importedEndpoints],
+  );
+  const allVersions = useMemo(
+    () => [...versions, ...importedVersions],
+    [versions, importedVersions],
+  );
+  const activeVersion = useMemo(() => allVersions.find((v) => v.isActive) ?? null, [allVersions]);
 
   // Compute workflow usage per endpoint
   const usedInWorkflows = useMemo(() => {
     const map: Record<string, string[]> = {};
-    for (const ep of endpoints) {
+    for (const ep of allEndpoints) {
       const epDetail = details[ep.id];
       if (epDetail) {
         map[ep.id] = epDetail.tags.filter((t) =>
@@ -112,16 +152,16 @@ export function ApiView({
       }
     }
     return map;
-  }, [endpoints, details]);
+  }, [allEndpoints, details]);
 
   // Resolve the current detail based on mode
   const currentDetail = useMemo(() => {
     if (panelMode === 'create') return emptyEndpointDetail();
     if (!selectedEndpointId) return null;
-    const ep = endpoints.find((e) => e.id === selectedEndpointId);
+    const ep = allEndpoints.find((e) => e.id === selectedEndpointId);
     if (!ep) return null;
     return detailFromEndpoint(ep, details);
-  }, [panelMode, selectedEndpointId, endpoints, details]);
+  }, [panelMode, selectedEndpointId, allEndpoints, details]);
 
   // ── Handlers ──
 
@@ -172,8 +212,8 @@ export function ApiView({
           path: detail.path,
           summary: detail.summary,
           description: detail.description,
-          coverage: endpoints.find((e) => e.id === selectedEndpointId)?.coverage ?? 0,
-          cases: endpoints.find((e) => e.id === selectedEndpointId)?.cases ?? 0,
+          coverage: allEndpoints.find((e) => e.id === selectedEndpointId)?.coverage ?? 0,
+          cases: allEndpoints.find((e) => e.id === selectedEndpointId)?.cases ?? 0,
           tags: detail.tags,
           deprecated: detail.deprecated,
           versionId: activeVersion?.id,
@@ -182,7 +222,7 @@ export function ApiView({
         setPanelMode('view');
       }
     },
-    [panelMode, selectedEndpointId, activeVersion, endpoints, onCreate, onUpdate],
+    [panelMode, selectedEndpointId, activeVersion, allEndpoints, onCreate, onUpdate],
   );
 
   const handleDelete = useCallback(
@@ -199,6 +239,163 @@ export function ApiView({
     },
     [onAddToWorkflow],
   );
+
+  // ── Import handlers ──
+
+  /** Called by ImportDialog when the user initiates an import. */
+  const handleImport = useCallback(
+    (config: ImportConfig) => {
+      importConfigRef.current = config;
+      setImportErrorMessage(null);
+      setImportedEndpoints([]);
+      setImportedVersions([]);
+      startImport(config);
+    },
+    [startImport],
+  );
+
+  /** Apply the imported data to local state and signal the parent. */
+  const applyImportedData = useCallback(
+    (newEndpoints: ApiEndpoint[], newVersion: ApiVersionInfo) => {
+      setImportedEndpoints((prev) => [...prev, ...newEndpoints]);
+      setImportedVersions((prev) => [...prev, newVersion]);
+      if (importConfigRef.current) onImport(importConfigRef.current);
+    },
+    [onImport],
+  );
+
+  /** Apply conflict resolution choices and finalize the import. */
+  const handleConflictResolve = useCallback(
+    (resolutions: Map<string, ConflictResolution>) => {
+      if (!pendingImportData) return;
+      const { endpoints: newEndpoints, version: newVersion } = pendingImportData;
+      const finalEndpoints = newEndpoints.filter((ep) => {
+        const resolution = resolutions.get(ep.id);
+        return resolution !== 'skip';
+      });
+      applyImportedData(finalEndpoints, newVersion);
+      setShowConflictDialog(false);
+      setPendingImportData(null);
+    },
+    [pendingImportData, applyImportedData],
+  );
+
+  // Watch the import worker for completion
+  useEffect(() => {
+    if (!result) return;
+
+    const importResult = result as {
+      success: boolean;
+      model?: {
+        schemaVersion: string;
+        metadata: {
+          sourceId: string;
+          sourceType: string;
+          sourceLabel: string;
+          sourceVersion: string;
+          sourceHash: string;
+          parserName: string;
+          parserVersion: string;
+          ingestedAt: string;
+        };
+        servers: Array<Record<string, unknown>>;
+        securitySchemes: Array<Record<string, unknown>>;
+        endpoints: Array<{
+          id: string;
+          method: string;
+          path: string;
+          summary?: string;
+          description?: string;
+          deprecated: boolean;
+          tags?: string[];
+        }>;
+        schemas: Record<string, unknown>;
+        diagnostics: Array<{ message: string }>;
+      };
+      diagnostics?: Array<{ message: string }>;
+    };
+
+    if (!importResult.success || !importResult.model) {
+      const msg = importResult.diagnostics?.[0]?.message || '导入失败：无法解析文档';
+      setImportErrorMessage(msg);
+      return;
+    }
+
+    const model = importResult.model as unknown as CanonicalApiModel;
+    const { versionId, endpointCount } = saveApiImport(model);
+
+    const newEndpoints: ApiEndpoint[] = model.endpoints.map((ep) => ({
+      id: ep.id as ApiEndpoint['id'],
+      method: ep.method as ApiEndpoint['method'],
+      path: ep.path,
+      summary: ep.summary || '',
+      description: ep.description,
+      coverage: 0,
+      cases: 0,
+      tags: ep.tags || [],
+      deprecated: ep.deprecated,
+      versionId: versionId as ApiEndpoint['versionId'],
+    }));
+
+    const newVersion: ApiVersionInfo = {
+      id: versionId,
+      label: `${model.metadata.sourceLabel} · v${model.metadata.sourceVersion}`,
+      sourceType: model.metadata.sourceType as ApiVersionInfo['sourceType'],
+      fileName: model.metadata.sourceLabel,
+      version: model.metadata.sourceVersion,
+      endpointCount,
+      schemaCount: Object.keys(model.schemas || {}).length,
+      importedAt: new Date().toISOString(),
+      isActive: false,
+    };
+
+    // Detect conflicts with existing endpoints
+    const existingIds = new Set(allEndpoints.map((e) => e.id));
+    const conflictingEps = newEndpoints.filter((ep) => existingIds.has(ep.id));
+    const config = importConfigRef.current;
+
+    // Show conflict resolution dialog when strategy is 'decide-per-item'
+    if (conflictingEps.length > 0 && config?.conflictStrategy === 'decide-per-item') {
+      setConflicts(
+        conflictingEps.map((ep) => ({
+          endpointId: ep.id,
+          existing: {
+            summary: allEndpoints.find((e) => e.id === ep.id)?.summary || '',
+            sourceType: 'existing',
+            versionLabel: 'Previously imported',
+          },
+          incoming: {
+            summary: ep.summary,
+            sourceLabel: model.metadata.sourceLabel,
+          },
+        })),
+      );
+      setPendingImportData({ endpoints: newEndpoints, version: newVersion });
+      setShowConflictDialog(true);
+      return;
+    }
+
+    // Apply with conflict strategy
+    const strategy = config?.conflictStrategy || 'skip';
+    const finalEndpoints =
+      strategy === 'skip' ? newEndpoints.filter((ep) => !existingIds.has(ep.id)) : newEndpoints;
+
+    applyImportedData(finalEndpoints, newVersion);
+  }, [result, allEndpoints, applyImportedData]);
+
+  // Clear import error when starting a new import
+  useEffect(() => {
+    if (isRunning) {
+      setImportErrorMessage(null);
+    }
+  }, [isRunning]);
+
+  // Show error from the hook
+  useEffect(() => {
+    if (importError) {
+      setImportErrorMessage(importError);
+    }
+  }, [importError]);
 
   return (
     <main className="page-view">
@@ -233,6 +430,13 @@ export function ApiView({
         </div>
       </div>
 
+      {/* Import error banner */}
+      {importErrorMessage ? (
+        <div className="notice notice--danger">
+          <span>导入失败：{importErrorMessage}</span>
+        </div>
+      ) : null}
+
       {/* Import success banner */}
       {imported ? (
         <div className="notice notice--success">
@@ -246,9 +450,43 @@ export function ApiView({
         </div>
       ) : null}
 
+      {/* Import progress modal */}
+      {isRunning && progress ? (
+        <div className="modal-backdrop">
+          <div className="modal" role="dialog" aria-modal="true" aria-label="导入进度">
+            <div className="modal-heading">
+              <div>
+                <span className="eyebrow">IMPORTING</span>
+                <h2>正在导入...</h2>
+              </div>
+            </div>
+            <div className="modal-body">
+              <ImportProgressBar
+                current={progress.current}
+                total={progress.total}
+                phase={progress.phase}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="button button--ghost" type="button" onClick={cancel}>
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Conflict resolution dialog */}
+      <ConflictResolutionDialog
+        open={showConflictDialog}
+        conflicts={conflicts}
+        onResolve={handleConflictResolve}
+        onClose={() => setShowConflictDialog(false)}
+      />
+
       {/* Main catalog table */}
       <ApiTable
-        endpoints={endpoints}
+        endpoints={allEndpoints}
         activeVersion={activeVersion}
         usedInWorkflows={usedInWorkflows}
         onViewDetail={handleViewDetail}
@@ -262,7 +500,7 @@ export function ApiView({
           detail={currentDetail}
           mode={panelMode}
           schemas={schemas}
-          existingIds={endpoints.map((e) => e.id)}
+          existingIds={allEndpoints.map((e) => e.id)}
           onSave={handleSave}
           onDelete={panelMode === 'edit' ? handleDelete : undefined}
           onAddToWorkflow={panelMode === 'view' ? handleAddToWorkflow : undefined}
@@ -272,7 +510,11 @@ export function ApiView({
       ) : null}
 
       {/* Import dialog */}
-      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} onImport={onImport} />
+      <ImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+      />
 
       {/* Version diff dialog */}
       <VersionDiffDialog open={diffOpen} diff={diff} onClose={() => setDiffOpen(false)} />
