@@ -11,6 +11,7 @@ import { EndpointDetailPanel, type PanelMode } from '../components/api/EndpointD
 import { ImportDialog } from '../components/api/ImportDialog';
 import { ImportProgressBar } from '../components/api/ImportProgressBar';
 import { VersionDiffDialog } from '../components/api/VersionDiffDialog';
+import { SourceSelector } from '../components/source/SourceSelector';
 import { useImportWorker } from '../hooks/useImportWorker';
 import { saveApiImport } from '../lib/storage';
 import type {
@@ -92,7 +93,7 @@ interface ApiViewProps {
  * delegating rendering to focused sub-components.
  */
 export function ApiView({
-  sources: _sources,
+  sources,
   endpoints,
   versions,
   details,
@@ -105,12 +106,13 @@ export function ApiView({
   onDelete,
   onAddToWorkflow,
   onCreateSchema,
-  onManageSources: _onManageSources,
+  onManageSources,
 }: ApiViewProps) {
   const [importOpen, setImportOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
   const [panelMode, setPanelMode] = useState<PanelMode>('view');
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
 
   // ── Import worker state ──
 
@@ -135,14 +137,19 @@ export function ApiView({
 
   // ── Derived state ──
 
-  const allEndpoints = useMemo(
-    () => [...endpoints, ...importedEndpoints],
-    [endpoints, importedEndpoints],
-  );
   const allVersions = useMemo(
     () => [...versions, ...importedVersions],
     [versions, importedVersions],
   );
+  const allEndpoints = useMemo(() => {
+    const merged = [...endpoints, ...importedEndpoints];
+    if (!selectedSourceId) return merged;
+    // Filter endpoints whose version belongs to the selected source
+    const sourceVersionIds = new Set(
+      allVersions.filter((v) => v.sourceId === selectedSourceId).map((v) => v.id),
+    );
+    return merged.filter((ep) => ep.versionId && sourceVersionIds.has(ep.versionId));
+  }, [endpoints, importedEndpoints, selectedSourceId, allVersions]);
   const activeVersion = useMemo(() => allVersions.find((v) => v.isActive) ?? null, [allVersions]);
 
   // Compute workflow usage per endpoint
@@ -412,6 +419,12 @@ export function ApiView({
           <p>管理接口定义，支持从 OpenAPI 导入或手动录入。</p>
         </div>
         <div className="page-intro-actions">
+          <SourceSelector
+            sources={sources}
+            selectedSourceId={selectedSourceId}
+            onSelect={setSelectedSourceId}
+            onManage={onManageSources ?? (() => {})}
+          />
           <button
             className="button button--outline"
             type="button"
