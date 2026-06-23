@@ -105,9 +105,22 @@ import type { CanonicalApiModel } from '@sketch-test/canonical-api-model';
 
 const API_VERSIONS_KEY = 'sketchtest.api-versions:v1';
 const API_ENDPOINTS_KEY = 'sketchtest.api-endpoints:v1';
+const API_SOURCES_KEY = 'sketchtest.api-sources:v1';
+
+export interface StoredApiSource {
+  id: string;
+  name: string;
+  description?: string;
+  sourceLabel: string;
+  sourceType: string;
+  defaultBaseUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface StoredApiVersion {
   id: string;
+  sourceId?: string;
   sourceType: string;
   sourceLabel: string;
   importedAt: string;
@@ -130,7 +143,7 @@ export interface StoredApiEndpoint {
  * Persist a CanonicalApiModel to localStorage with versioned keys.
  * Creates a version entry and appends new endpoints (skipping duplicates by id).
  */
-export function saveApiImport(model: CanonicalApiModel): {
+export function saveApiImport(model: CanonicalApiModel, sourceId?: string): {
   versionId: string;
   endpointCount: number;
 } {
@@ -140,6 +153,7 @@ export function saveApiImport(model: CanonicalApiModel): {
   const versionId = `v-${Date.now()}`;
   const version: StoredApiVersion = {
     id: versionId,
+    sourceId,
     sourceType: model.metadata.sourceType,
     sourceLabel: model.metadata.sourceLabel,
     importedAt: new Date().toISOString(),
@@ -169,6 +183,42 @@ export function saveApiImport(model: CanonicalApiModel): {
   saveAllEndpoints(storedEndpoints);
 
   return { versionId, endpointCount: model.endpoints.length };
+}
+
+export function loadApiSources(): StoredApiSource[] {
+  try {
+    const raw = localStorage.getItem(API_SOURCES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as StoredApiSource[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function saveApiSources(sources: StoredApiSource[]): void {
+  try {
+    localStorage.setItem(API_SOURCES_KEY, JSON.stringify(sources));
+  } catch {
+    // Storage full — silently ignore
+  }
+}
+
+export function upsertApiSource(source: StoredApiSource): void {
+  const sources = loadApiSources();
+  const idx = sources.findIndex((s) => s.id === source.id);
+  if (idx >= 0) {
+    sources[idx] = source;
+  } else {
+    sources.push(source);
+  }
+  saveApiSources(sources);
+}
+
+export function deleteApiSource(sourceId: string): void {
+  const sources = loadApiSources().filter((s) => s.id !== sourceId);
+  saveApiSources(sources);
 }
 
 export function loadApiVersions(): StoredApiVersion[] {
