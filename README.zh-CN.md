@@ -8,6 +8,9 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](https://pnpm.io)
+[![在线演示](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://yachi666.github.io/sketch-test/)
+
+[English](README.md) | [中文](README.zh-CN.md)
 
 </div>
 
@@ -61,6 +64,16 @@ flowchart LR
 | **AI Worker** | 🔲 M1 | 规范解析、Git 仓库分析、测试草稿生成 | Node.js / TypeScript |
 
 **核心原则：** 控制面、Runner 和 AI Worker 是独立进程。共享的是版本化契约，不是进程生命周期。未来某个热点需要 Go/Rust/Python？在已有 seam 后替换即可，契约不变。
+
+---
+
+## 在线体验
+
+**[🔗 打开在线演示 →](https://yachi666.github.io/sketch-test/)**
+
+我们提供了 SketchTest Web 控制台的在线预览。无需配置本地环境，即可浏览界面、查看 API 资产并体验流程编辑器。
+
+> **注意：** 在线演示仅展示 Web 控制台界面。如需执行测试，请按下方快速开始搭建本地开发环境。
 
 ---
 

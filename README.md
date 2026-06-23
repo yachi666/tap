@@ -8,6 +8,9 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](https://pnpm.io)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://yachi666.github.io/sketch-test/)
+
+[English](README.md) | [中文](README.zh-CN.md)
 
 </div>
 
@@ -61,6 +64,16 @@ flowchart LR
 | **AI Worker** | 🔲 M1 | Spec parsing, Git analysis, test draft generation | Node.js / TypeScript |
 
 **Key principle:** Control Plane, Runner, and AI Worker are independent processes. They share versioned contracts — never process lifecycles. Need Go/Rust/Python later? Swap behind the existing seam.
+
+---
+
+## Try It Online
+
+**[🔗 Launch the live demo →](https://yachi666.github.io/sketch-test/)**
+
+A hosted preview of the SketchTest Web Console is available. Explore the UI, browse API assets, and see the workflow editor in action — no setup required.
+
+> **Note:** The online demo shows the Web Console only. To execute tests, set up a local development environment following the Quick Start below.
 
 ---
 
