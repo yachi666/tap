@@ -1,0 +1,25 @@
+{
+  "name": "@sketch-test/adapter-postman",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Postman Collection v2.1 → CanonicalApiModel adapter",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "lint": "biome check",
+    "test": "vitest run",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@sketch-test/contracts-common": "workspace:*",
+    "@sketch-test/canonical-api-model": "workspace:*",
+    "@sketch-test/format-detector": "workspace:*",
+    "jsonc-parser": "^3.3.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
