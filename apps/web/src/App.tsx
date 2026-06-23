@@ -118,6 +118,7 @@ import type {
   WorkflowStep,
 } from './types';
 import { resolveVariableValue } from './types';
+import type { ImportConfig } from './types/import';
 import { ApiView } from './views/ApiView';
 
 const viewLabels: Record<ViewId, string> = {
@@ -3381,7 +3382,7 @@ export function App() {
     });
     setSidebarOpen(false);
   };
-  const importApi = () => {
+  const importApi = (_config: ImportConfig) => {
     setImported(true);
     setView('apis');
     notify('OpenAPI 导入成功 · 已创建 6 个接口资产');

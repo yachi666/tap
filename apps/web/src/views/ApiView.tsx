@@ -11,6 +11,7 @@ import type {
   EndpointDetail,
   SchemaDisplayNode,
 } from '../types';
+import type { ImportConfig } from '../types/import';
 
 /**
  * Empty endpoint template used when creating a new endpoint.
@@ -60,7 +61,7 @@ interface ApiViewProps {
   schemas: Record<string, SchemaDisplayNode>;
   diff: ApiVersionDiff | null;
   imported: boolean;
-  onImport: () => void;
+  onImport: (config: ImportConfig) => void;
   onCreate: (endpoint: ApiEndpoint, detail: EndpointDetail) => void;
   onUpdate: (endpoint: ApiEndpoint, detail: EndpointDetail) => void;
   onDelete: (endpointId: string) => void;

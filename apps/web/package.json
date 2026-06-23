@@ -13,6 +13,7 @@
   "dependencies": {
     "@phosphor-icons/react": "catalog:",
     "@sketch-test/contracts-common": "workspace:*",
+    "@sketch-test/format-detector": "workspace:*",
     "@vitejs/plugin-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
