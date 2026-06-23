@@ -2344,6 +2344,7 @@ function VariableDialog({
   mode,
   variable,
   environments,
+  sources,
   onSave,
   onClose,
 }: {
@@ -2351,6 +2352,7 @@ function VariableDialog({
   mode: 'create' | 'edit';
   variable: Variable | null;
   environments: Environment[];
+  sources: ApiSource[];
   onSave: (v: Variable) => void;
   onClose: () => void;
 }) {
@@ -2359,6 +2361,7 @@ function VariableDialog({
   const [type, setType] = useState<VariableType>('plain');
   const [scope, setScope] = useState<VariableScope>('environment');
   const [sensitive, setSensitive] = useState(false);
+  const [sourceId, setSourceId] = useState('');
   const [description, setDescription] = useState('');
   const [showValue, setShowValue] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
@@ -2375,6 +2378,7 @@ function VariableDialog({
       setType(variable.type);
       setScope(variable.scope);
       setSensitive(variable.sensitive);
+      setSourceId(variable.sourceId ?? '');
       setDescription(variable.description);
       setOverrides({ ...variable.overrides });
       setShowValue(false);
@@ -2385,6 +2389,7 @@ function VariableDialog({
       setType('plain');
       setScope('environment');
       setSensitive(false);
+      setSourceId('');
       setDescription('');
       setOverrides({});
       setShowValue(false);
@@ -2429,6 +2434,7 @@ function VariableDialog({
       overrides: showEnvOverrides ? overrides : {},
       type,
       scope,
+      sourceId: sourceId || undefined,
       sensitive,
       description: description.trim(),
       updatedAt: now,
@@ -2577,6 +2583,20 @@ function VariableDialog({
                 <option value="secret">Secret</option>
               </select>
             </label>
+
+            {scope === 'environment' && (
+              <label className="variable-field">
+                <span className="field-label">所属系统</span>
+                <select value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
+                  <option value="">全局（不限系统）</option>
+                  {sources.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           {/* Sensitive checkbox */}
@@ -2722,7 +2742,7 @@ function VariablesView({
   variables,
   environments,
   activeEnvironmentId,
-  sources: _sources,
+  sources,
   onCreate,
   onUpdate,
   onDelete,
@@ -2738,6 +2758,7 @@ function VariablesView({
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | VariableType>('all');
   const [scopeFilter, setScopeFilter] = useState<'all' | VariableScope>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('');
 
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -2779,7 +2800,13 @@ function VariablesView({
       resolvedValue.toLowerCase().includes(q);
     const matchesType = typeFilter === 'all' || v.type === typeFilter;
     const matchesScope = scopeFilter === 'all' || v.scope === scopeFilter;
-    return matchesQuery && matchesType && matchesScope;
+    const matchesSource =
+      sourceFilter === ''
+        ? true
+        : sourceFilter === '__global__'
+          ? !v.sourceId
+          : v.sourceId === sourceFilter;
+    return matchesQuery && matchesType && matchesScope && matchesSource;
   });
 
   const typeCounts = {
@@ -2796,6 +2823,7 @@ function VariablesView({
         mode={dialogMode}
         variable={editingVariable}
         environments={environments}
+        sources={sources}
         onSave={handleSave}
         onClose={() => setDialogOpen(false)}
       />
@@ -2874,6 +2902,28 @@ function VariablesView({
           </select>
           <CaretDown size={15} aria-hidden />
         </label>
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+          className="source-select"
+          aria-label="按系统筛选"
+          style={{
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: '4px 10px',
+            fontSize: '0.72rem',
+            color: 'var(--muted)',
+            background: 'var(--paper)',
+          }}
+        >
+          <option value="">全部系统</option>
+          <option value="__global__">全局变量</option>
+          {sources.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Main table */}
