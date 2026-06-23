@@ -3412,6 +3412,199 @@ textarea:focus-visible {
 }
 
 /* ============================================
+   IMPORT PROGRESS BAR
+   ============================================ */
+
+.import-progress-bar {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px 14px 9px 12px;
+  margin: 12px 0;
+}
+
+.import-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.import-progress-phase {
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.import-progress-percentage {
+  color: var(--brown);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.import-progress-track {
+  width: 100%;
+  height: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 10px;
+  background: var(--border-soft);
+  color: var(--brown);
+  overflow: hidden;
+}
+
+.import-progress-track::-webkit-progress-bar {
+  background: var(--border-soft);
+  border-radius: 10px;
+}
+
+.import-progress-track::-webkit-progress-value {
+  background: var(--brown);
+  border-radius: 10px;
+  transition: width 240ms ease;
+}
+
+.import-progress-track::-moz-progress-bar {
+  background: var(--brown);
+  border-radius: 10px;
+}
+
+.import-progress-item {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================
+   CONFLICT RESOLUTION DIALOG
+   ============================================ */
+
+.conflict-resolution-dialog {
+  width: min(720px, 100%);
+}
+
+.conflict-bulk-actions {
+  display: flex;
+  gap: 6px;
+  padding: 12px 0 8px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.conflict-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+
+.conflict-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  margin-top: 8px;
+}
+
+.conflict-table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border-soft);
+  white-space: nowrap;
+}
+
+.conflict-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+.conflict-row--selected {
+  background: var(--brown-soft);
+}
+
+.conflict-col-check {
+  width: 36px;
+}
+
+.conflict-col-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brown);
+  cursor: pointer;
+}
+
+.conflict-col-endpoint {
+  min-width: 140px;
+}
+
+.conflict-col-endpoint code {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.conflict-col-existing,
+.conflict-col-incoming {
+  min-width: 130px;
+}
+
+.conflict-summary {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.conflict-source {
+  display: block;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 400;
+}
+
+.conflict-col-action {
+  min-width: 120px;
+}
+
+.conflict-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 32px;
+  padding: 4px 28px 4px 10px;
+  background: var(--white);
+  border: 1px solid var(--border-dark);
+  border-radius: 6px 10px 7px 9px;
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 500;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2378716c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.conflict-select:focus {
+  outline: none;
+  border-color: var(--brown);
+  box-shadow: 0 0 0 2px rgba(146, 64, 14, 0.08);
+}
+
+/* ============================================
    TOAST
    ============================================ */
 
