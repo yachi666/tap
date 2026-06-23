@@ -20,4 +20,3 @@
  */
 export { parseCollection } from './parser/collection.js';
 export { parseEnvironment } from './parser/environment.js';
-

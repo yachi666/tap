@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveVariables, expandTemplate } from '../mapper/variables.js';
+import { expandTemplate, resolveVariables } from '../mapper/variables.js';
 import type { PostmanVariable } from '../types.js';
 
 // ─── resolveVariables ───────────────────────────────────────────────────
