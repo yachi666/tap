@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "catalog:",
+    "@sketch-test/adapter-har": "workspace:*",
+    "@sketch-test/adapter-postman": "workspace:*",
     "@sketch-test/contracts-common": "workspace:*",
     "@sketch-test/format-detector": "workspace:*",
     "@vitejs/plugin-react": "catalog:",
