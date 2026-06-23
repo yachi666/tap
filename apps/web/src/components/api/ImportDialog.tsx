@@ -1,5 +1,5 @@
 import { CheckCircle, FileArrowUp, PlugsConnected, UploadSimple, X } from '@phosphor-icons/react';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ImportDialogProps {
   open: boolean;

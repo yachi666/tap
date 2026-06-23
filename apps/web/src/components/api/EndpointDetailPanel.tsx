@@ -2,9 +2,7 @@ import {
   BracketsCurly,
   CaretDown,
   CaretRight,
-  Check,
   FloppyDisk,
-  PencilSimple,
   Plus,
   ShieldCheck,
   Tag,
@@ -12,7 +10,8 @@ import {
   Warning,
   X,
 } from '@phosphor-icons/react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import type { HttpMethod } from '@sketch-test/contracts-common';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ApiParameter,
   ApiRequestBody,
@@ -20,7 +19,6 @@ import type {
   EndpointDetail,
   SchemaDisplayNode,
 } from '../../types';
-import type { HttpMethod } from '@sketch-test/contracts-common';
 import { MethodBadge } from '../shared/MethodBadge';
 import { SchemaViewer } from './SchemaViewer';
 
@@ -55,7 +53,7 @@ export function EndpointDetailPanel({
   detail: initialDetail,
   mode,
   schemas,
-  existingIds,
+  existingIds: _existingIds,
   onSave,
   onDelete,
   onAddToWorkflow,
@@ -131,7 +129,6 @@ export function EndpointDetailPanel({
       <aside
         ref={panelRef}
         className={`endpoint-detail-panel${isEditing ? ' endpoint-detail-panel--editing' : ''}`}
-        role="complementary"
         aria-label={titleText}
       >
         {/* Header */}
@@ -256,18 +253,16 @@ export function EndpointDetailPanel({
           {/* Header actions */}
           <div className="endpoint-detail-header-actions">
             {mode === 'view' ? (
-              <>
-                {onAddToWorkflow ? (
-                  <button
-                    className="button button--primary button--sm"
-                    type="button"
-                    onClick={() => onAddToWorkflow(draft.endpointId)}
-                  >
-                    <Plus size={16} />
-                    加入流程
-                  </button>
-                ) : null}
-              </>
+              onAddToWorkflow ? (
+                <button
+                  className="button button--primary button--sm"
+                  type="button"
+                  onClick={() => onAddToWorkflow(draft.endpointId)}
+                >
+                  <Plus size={16} />
+                  加入流程
+                </button>
+              ) : null
             ) : (
               <button
                 className="button button--primary button--sm"

@@ -70,6 +70,9 @@ import {
   useState,
 } from 'react';
 import {
+  apiSchemas,
+  apiVersions,
+  endpointDetails,
   endpoints,
   initialCases,
   initialEnvironments,
@@ -77,9 +80,6 @@ import {
   initialRuns,
   initialSteps,
   initialVariables,
-  apiSchemas,
-  apiVersions,
-  endpointDetails,
   makeLogs,
   responseFixture,
   testPlans,
@@ -87,7 +87,6 @@ import {
   workflowStepsMap,
   workflows,
 } from './data';
-import { ApiView } from './views/ApiView';
 import type {
   ApiEndpoint,
   EndpointDetail,
@@ -107,6 +106,7 @@ import type {
   WorkflowStep,
 } from './types';
 import { resolveVariableValue } from './types';
+import { ApiView } from './views/ApiView';
 
 const viewLabels: Record<ViewId, string> = {
   overview: '工作台',

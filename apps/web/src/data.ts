@@ -1,9 +1,5 @@
 import type {
-  ApiChangeItem,
   ApiEndpoint,
-  ApiParameter,
-  ApiRequestBody,
-  ApiResponseDef,
   ApiVersionDiff,
   ApiVersionInfo,
   EndpointDetail,

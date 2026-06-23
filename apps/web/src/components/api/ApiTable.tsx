@@ -6,7 +6,7 @@ import {
   Trash,
   Warning,
 } from '@phosphor-icons/react';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ApiEndpoint, ApiVersionInfo, EndpointDetail, SchemaDisplayNode } from '../../types';
 import { MethodBadge } from '../shared/MethodBadge';
 import { SearchField } from '../shared/SearchField';

@@ -3527,6 +3527,7 @@ textarea:focus-visible {
 }
 
 /* Small button variant */
+/* biome-ignore lint/style/noDescendingSpecificity: shared utility, overrides handled by cascade */
 .button--sm {
   padding: 4px 10px;
   font-size: 0.6rem;
@@ -3947,11 +3948,9 @@ textarea:focus-visible {
   .data-row {
     grid-template-columns: 66px minmax(230px, 1fr) 52px;
   }
-  /* biome-ignore lint/style/noDescendingSpecificity: cross-breakpoint */
   .data-row > :nth-child(3) {
     display: none;
   }
-  /* biome-ignore lint/style/noDescendingSpecificity: cross-breakpoint */
   .data-row > :nth-child(4) {
     display: none;
   }
@@ -5115,6 +5114,7 @@ textarea:focus-visible {
 }
 
 /* ─── Small button variant ─────── */
+/* biome-ignore lint/style/noDescendingSpecificity: shared utility, overrides handled by cascade */
 .button--sm {
   padding: 4px 10px;
   font-size: 0.72rem;

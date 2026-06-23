@@ -1,6 +1,5 @@
-import { Check, SlidersHorizontal, X } from '@phosphor-icons/react';
-import { useState, useRef, useEffect } from 'react';
-import type { HttpMethod } from '@sketch-test/contracts-common';
+import { SlidersHorizontal, X } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
 
 interface FilterDropdownProps {
   /** All unique HTTP methods among endpoints. */

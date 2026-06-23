@@ -1,12 +1,5 @@
-import {
-  ArrowsClockwise,
-  CaretDown,
-  Check,
-  Warning,
-  WarningCircle,
-  X,
-} from '@phosphor-icons/react';
-import { useState, useRef, useEffect } from 'react';
+import { ArrowsClockwise, Warning, X } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
 import type { ApiVersionDiff } from '../../types';
 
 interface VersionDiffDialogProps {

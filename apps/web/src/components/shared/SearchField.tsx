@@ -1,5 +1,5 @@
 import { MagnifyingGlass } from '@phosphor-icons/react';
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface SearchFieldProps {
   value: string;

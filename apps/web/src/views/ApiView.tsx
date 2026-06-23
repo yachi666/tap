@@ -1,16 +1,16 @@
 import { CheckCircle, FileArrowUp, GitBranch, Plus } from '@phosphor-icons/react';
-import { useState, useCallback, useMemo } from 'react';
-import type {
-  ApiEndpoint,
-  ApiVersionInfo,
-  EndpointDetail,
-  SchemaDisplayNode,
-  ApiVersionDiff,
-} from '../types';
+import { useCallback, useMemo, useState } from 'react';
 import { ApiTable } from '../components/api/ApiTable';
 import { EndpointDetailPanel, type PanelMode } from '../components/api/EndpointDetailPanel';
 import { ImportDialog } from '../components/api/ImportDialog';
 import { VersionDiffDialog } from '../components/api/VersionDiffDialog';
+import type {
+  ApiEndpoint,
+  ApiVersionDiff,
+  ApiVersionInfo,
+  EndpointDetail,
+  SchemaDisplayNode,
+} from '../types';
 
 /**
  * Empty endpoint template used when creating a new endpoint.
