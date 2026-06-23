@@ -1,12 +1,5 @@
-import {
-  DotsThree,
-  Eye,
-  MagnifyingGlass,
-  PencilSimple,
-  Trash,
-  Warning,
-} from '@phosphor-icons/react';
-import { useEffect, useMemo, useState } from 'react';
+import { MagnifyingGlass, PencilSimple, Trash, Warning } from '@phosphor-icons/react';
+import { useMemo, useState } from 'react';
 import type { ApiEndpoint, ApiVersionInfo } from '../../types';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 import { MethodBadge } from '../shared/MethodBadge';
@@ -20,13 +13,14 @@ interface ApiTableProps {
   usedInWorkflows: Record<string, string[]>;
   onViewDetail: (endpointId: string) => void;
   onEdit: (endpointId: string) => void;
-  /** Called when user clicks delete in the row menu. */
+  /** Called when user confirms deletion in the confirm dialog. */
   onDelete?: (endpointId: string) => void;
 }
 
 /**
  * The core API catalog table with search, filter, and per-row actions.
- * Each row has a kebab menu with view/edit/delete actions.
+ * Rows are fully clickable — clicking anywhere opens the detail view.
+ * Edit and Delete buttons sit at the end of each row with stopPropagation.
  */
 export function ApiTable({
   endpoints,
@@ -40,18 +34,7 @@ export function ApiTable({
   const [activeMethod, setActiveMethod] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [coverageRange, setCoverageRange] = useState<[number, number]>([0, 100]);
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ApiEndpoint | null>(null);
-
-  // Close menu on outside click
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest('.row-menu')) setMenuOpen(null);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
 
   // Derive unique methods and tags from endpoints
   const methods = useMemo(() => [...new Set(endpoints.map((ep) => ep.method))].sort(), [endpoints]);
@@ -82,7 +65,7 @@ export function ApiTable({
       : 0;
 
   return (
-    <section className="table-panel">
+    <section className="table-panel api-catalog">
       {/* Stats bar */}
       <div className="api-stats-bar">
         <div className="api-stat">
@@ -151,7 +134,20 @@ export function ApiTable({
           </div>
         ) : (
           filtered.map((api) => (
-            <div className="data-row" key={api.id}>
+            <div
+              className="data-row"
+              key={api.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`查看 ${api.method} ${api.path} 详情`}
+              onClick={() => onViewDetail(api.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onViewDetail(api.id);
+                }
+              }}
+            >
               <span>
                 <MethodBadge method={api.method} />
                 {api.deprecated ? (
@@ -186,75 +182,27 @@ export function ApiTable({
                 <button
                   className="icon-button"
                   type="button"
-                  aria-label={`查看 ${api.path} 详情`}
-                  onClick={() => onViewDetail(api.id)}
-                >
-                  <Eye size={18} />
-                </button>
-                <button
-                  className="icon-button"
-                  type="button"
                   aria-label={`编辑 ${api.path}`}
-                  onClick={() => onEdit(api.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(api.id);
+                  }}
                 >
                   <PencilSimple size={16} />
                 </button>
-                {/* Row kebab menu */}
-                <span className="row-menu" style={{ position: 'relative' }}>
+                {onDelete ? (
                   <button
-                    className="icon-button"
+                    className="icon-button icon-button--danger"
                     type="button"
-                    aria-label={`更多操作 ${api.path}`}
+                    aria-label={`删除 ${api.path}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setMenuOpen(menuOpen === api.id ? null : api.id);
+                      setDeleteTarget(api);
                     }}
                   >
-                    <DotsThree size={16} />
+                    <Trash size={16} />
                   </button>
-                  {menuOpen === api.id ? (
-                    <div className="row-menu-dropdown">
-                      <button
-                        type="button"
-                        className="row-menu-item"
-                        onClick={() => {
-                          setMenuOpen(null);
-                          onViewDetail(api.id);
-                        }}
-                      >
-                        <Eye size={14} />
-                        查看详情
-                      </button>
-                      <button
-                        type="button"
-                        className="row-menu-item"
-                        onClick={() => {
-                          setMenuOpen(null);
-                          onEdit(api.id);
-                        }}
-                      >
-                        <PencilSimple size={14} />
-                        编辑接口
-                      </button>
-                      {onDelete ? (
-                        <>
-                          <hr className="row-menu-divider" />
-                          <button
-                            type="button"
-                            className="row-menu-item row-menu-item--danger"
-                            onClick={() => {
-                              setMenuOpen(null);
-                              setDeleteTarget(api);
-                            }}
-                          >
-                            <Trash size={14} />
-                            删除接口
-                          </button>
-                        </>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </span>
+                ) : null}
               </span>
             </div>
           ))

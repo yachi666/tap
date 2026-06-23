@@ -1,11 +1,13 @@
-import { FloppyDisk, Plus, ShieldCheck, Tag, Trash, Warning, X } from '@phosphor-icons/react';
+import { FloppyDisk, Globe, Plus, Tag, Trash, X } from '@phosphor-icons/react';
 import type { HttpMethod } from '@sketch-test/contracts-common';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { EndpointDetail, SchemaDisplayNode } from '../../../types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { EndpointDetail, SchemaDisplayNode, Variable } from '../../../types';
+import { resolveVariableValue } from '../../../types';
 import { ConfirmDialog } from '../../shared/ConfirmDialog';
 import { MethodBadge } from '../../shared/MethodBadge';
 import { ParameterEditor } from './ParameterEditor';
 import { ParameterTable } from './ParameterTable';
+import { PreviewView } from './PreviewView';
 import { RequestBodyEditor } from './RequestBodyEditor';
 import { RequestBodyView } from './RequestBodyView';
 import { ResponseEditor } from './ResponseEditor';
@@ -31,6 +33,12 @@ interface EndpointDetailPanelProps {
   onAddToWorkflow?: (endpointId: string) => void;
   /** Called when user creates a new schema (e.g., from JSON body paste). */
   onCreateSchema?: (schema: SchemaDisplayNode) => void;
+  /** Host-tagged variables available for selection as the endpoint's base URL. */
+  hostVariables?: Variable[];
+  /** Current active environment ID for resolving variable values. */
+  activeEnvironmentId?: string;
+  /** Called when user types a manual host URL — should create a new Host-tagged Variable and return it. */
+  onCreateHostVariable?: (url: string) => Variable | Promise<Variable>;
   onClose: () => void;
 }
 
@@ -63,12 +71,17 @@ export function EndpointDetailPanel({
   onDelete,
   onAddToWorkflow,
   onCreateSchema,
+  hostVariables = [],
+  activeEnvironmentId,
+  onCreateHostVariable,
   onClose,
 }: EndpointDetailPanelProps) {
   const [tab, setTab] = useState<'params' | 'request' | 'responses' | 'schema'>('params');
   const [draft, setDraft] = useState<EndpointDetail>(structuredClone(initialDetail));
   const [hasChanges, setHasChanges] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [manualHostUrl, setManualHostUrl] = useState('');
+  const [saving, setSaving] = useState(false);
   const [confirmState, setConfirmState] = useState<{
     title: string;
     message: string;
@@ -80,6 +93,50 @@ export function EndpointDetailPanel({
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const isEditing = mode === 'edit' || mode === 'create';
+
+  // ── URL preview computation ──
+
+  const previewUrl = useMemo(() => {
+    // Resolve host URL
+    let baseUrl = '';
+    if (draft.hostVariableId) {
+      const hv = hostVariables.find((v) => v.id === draft.hostVariableId);
+      if (hv) {
+        baseUrl = resolveVariableValue(hv, activeEnvironmentId ?? null).replace(/\/+$/, '');
+      }
+    } else if (manualHostUrl.trim()) {
+      baseUrl = manualHostUrl.trim().replace(/\/+$/, '');
+    }
+
+    const path = draft.path || '';
+
+    // Collect query parameters with their example values
+    const queryEntries = draft.parameters
+      .filter((p) => p.in === 'query')
+      .map((p) => ({ name: p.name, example: p.example }));
+
+    const queryString = queryEntries.map((p) => `${p.name}=${p.example ?? ''}`).join('&');
+
+    const scheme = baseUrl.match(/^(https?:\/\/)/)?.[0] || '';
+    const hostPart = baseUrl.replace(/^https?:\/\//, '');
+
+    return {
+      scheme,
+      hostPart,
+      path,
+      queryString,
+      queryEntries,
+      hasBase: !!baseUrl,
+      hasContent: !!(baseUrl || path),
+    };
+  }, [
+    draft.hostVariableId,
+    draft.path,
+    draft.parameters,
+    hostVariables,
+    activeEnvironmentId,
+    manualHostUrl,
+  ]);
 
   // ── Body scroll lock ──
 
@@ -117,9 +174,26 @@ export function EndpointDetailPanel({
     setHasChanges(true);
   }, []);
 
-  const handleSave = () => {
-    onSave(draft);
+  const handleSave = async () => {
+    if (saving) return;
+
+    // If user typed a manual host URL, create a Host variable first
+    let hostVariableId = draft.hostVariableId;
+    if (!hostVariableId && manualHostUrl.trim() && onCreateHostVariable) {
+      try {
+        setSaving(true);
+        const newVar = await onCreateHostVariable(manualHostUrl.trim());
+        hostVariableId = newVar.id;
+        setDraft((prev) => ({ ...prev, hostVariableId: newVar.id }));
+      } catch {
+        // Variable creation failed — proceed without host
+      }
+    }
+
+    const finalDraft = hostVariableId ? { ...draft, hostVariableId } : draft;
+    onSave(finalDraft);
     setHasChanges(false);
+    setSaving(false);
   };
 
   // ── Close with exit animation ──
@@ -147,8 +221,8 @@ export function EndpointDetailPanel({
   const triggerCloseRef = useRef(triggerClose);
   triggerCloseRef.current = triggerClose;
 
-  const onSaveRef = useRef(onSave);
-  onSaveRef.current = onSave;
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -162,14 +236,13 @@ export function EndpointDetailPanel({
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         if (isEditing && hasChanges) {
-          onSaveRef.current(draft);
-          setHasChanges(false);
+          void handleSaveRef.current();
         }
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [isEditing, hasChanges, draft, confirmState]);
+  }, [isEditing, hasChanges, confirmState]);
 
   // ── Focus trap ──
 
@@ -217,6 +290,14 @@ export function EndpointDetailPanel({
 
   const responseSchema = draft.responses.find((r) => r.statusCode >= 200 && r.statusCode < 300);
   const requestBody = draft.requestBodies[0];
+
+  // Resolved host for view mode preview
+  const resolvedHost = useMemo(() => {
+    if (!draft.hostVariableId) return null;
+    const hv = hostVariables.find((v) => v.id === draft.hostVariableId);
+    if (!hv) return null;
+    return resolveVariableValue(hv, activeEnvironmentId ?? null);
+  }, [draft.hostVariableId, hostVariables, activeEnvironmentId]);
 
   const titleText = mode === 'create' ? '新建接口' : mode === 'edit' ? '编辑接口' : '接口详情';
   const saveLabel = mode === 'create' ? '创建' : '保存';
@@ -280,7 +361,16 @@ export function EndpointDetailPanel({
                   </svg>
                 ) : null}
               </span>
-              <h2>{titleText}</h2>
+              {mode === 'view' ? (
+                <div className="endpoint-dialog-titlebar-text">
+                  <h2>{draft.summary || titleText}</h2>
+                  {draft.description ? (
+                    <p className="endpoint-dialog-titlebar-desc">{draft.description}</p>
+                  ) : null}
+                </div>
+              ) : (
+                <h2>{titleText}</h2>
+              )}
             </div>
             <div className="endpoint-dialog-titlebar-right">
               {isEditing ? (
@@ -314,151 +404,277 @@ export function EndpointDetailPanel({
             </div>
           </div>
 
-          {/* ── Identity section (method + path + summary + description) ── */}
-          <div className="endpoint-dialog-identity">
-            {/* Method + Path row */}
-            <div className="endpoint-detail-method">
-              {isEditing ? (
-                <>
-                  <select
-                    className="input input--method"
-                    value={draft.method}
-                    onChange={(e) =>
-                      updateDraft({
-                        method: isHttpMethod(e.target.value) ? e.target.value : 'GET',
-                      })
-                    }
-                    aria-label="HTTP 方法"
-                  >
-                    {HTTP_METHODS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="detail-separator">/</span>
-                  <input
-                    ref={firstInputRef}
-                    className="input input--path"
-                    value={draft.path}
-                    onChange={(e) => updateDraft({ path: e.target.value })}
-                    placeholder="/api/resource/{id}"
-                    aria-label="接口路径"
-                  />
-                </>
-              ) : (
-                <>
-                  <MethodBadge method={draft.method} />
-                  {draft.deprecated ? (
-                    <span className="tag tag--warning">
-                      <Warning size={12} />
-                      已弃用
-                    </span>
+          {/* ── View mode: URL preview bar (full-width, outside identity) ── */}
+          {mode === 'view' ? (
+            <div className="preview-url-bar">
+              <MethodBadge method={draft.method} />
+              {previewUrl.hasBase ? (
+                <span className="preview-url-bar-url">
+                  <span className="preview-url-scheme">{previewUrl.scheme}</span>
+                  <span className="preview-url-host">{previewUrl.hostPart}</span>
+                  <span className="preview-url-path">{previewUrl.path || '/'}</span>
+                  {previewUrl.queryString ? (
+                    <>
+                      <span className="preview-url-qs-sep">?</span>
+                      {previewUrl.queryEntries.map((entry, i) => (
+                        <span key={entry.name}>
+                          {i > 0 ? <span className="preview-url-qs-sep">&amp;</span> : null}
+                          <span className="preview-url-param-name">{entry.name}</span>=
+                          <span className="preview-url-param-value">{entry.example ?? '…'}</span>
+                        </span>
+                      ))}
+                    </>
                   ) : null}
-                  <code className="endpoint-detail-path">{draft.path}</code>
-                </>
+                </span>
+              ) : resolvedHost ? (
+                <span className="preview-url-bar-url">
+                  <span className="preview-url-host">{resolvedHost}</span>
+                  <span className="preview-url-path">{draft.path || '/'}</span>
+                </span>
+              ) : (
+                <span className="preview-url-bar-url">
+                  <span className="preview-url-path">{draft.path || '/'}</span>
+                </span>
               )}
             </div>
+          ) : null}
 
-            {/* Summary */}
-            {isEditing ? (
-              <input
-                className="input input--summary"
-                value={draft.summary}
-                onChange={(e) => updateDraft({ summary: e.target.value })}
-                placeholder="接口摘要（如：创建用户）"
-                aria-label="接口摘要"
-              />
-            ) : (
-              <h3>{draft.summary}</h3>
-            )}
-
-            {/* Description */}
-            {isEditing ? (
-              <textarea
-                className="input input--desc"
-                value={draft.description ?? ''}
-                onChange={(e) => updateDraft({ description: e.target.value || undefined })}
-                placeholder="接口描述（可选，支持 Markdown）"
-                rows={2}
-                aria-label="接口描述"
-              />
-            ) : draft.description ? (
-              <p>{draft.description}</p>
-            ) : null}
-
-            {/* Security badge (view mode only) */}
-            {draft.security?.length && !isEditing ? (
-              <span className="tag tag--secure" style={{ marginTop: 4 }}>
-                <ShieldCheck size={12} />
-                需认证
-              </span>
-            ) : null}
-          </div>
-
-          {/* ── Tabs ── */}
-          <div className="endpoint-detail-tabs">
-            {(['params', 'request', 'responses', 'schema'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={`endpoint-detail-tab${tab === t ? ' active' : ''}`}
-                onClick={() => setTab(t)}
-              >
-                {t === 'params'
-                  ? '参数'
-                  : t === 'request'
-                    ? '请求体'
-                    : t === 'responses'
-                      ? '响应'
-                      : 'Schema'}
-                {t === 'params' ? <span className="badge">{draft.parameters.length}</span> : null}
-                {t === 'responses' ? <span className="badge">{draft.responses.length}</span> : null}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Tab content ── */}
-          <div className="endpoint-detail-body">
-            {tab === 'params' ? (
-              isEditing ? (
-                <ParameterEditor
-                  parameters={draft.parameters}
-                  onChange={(params) => updateDraft({ parameters: params })}
+          {/* ── Identity section (edit/create only) ── */}
+          {isEditing ? (
+            <div className="endpoint-dialog-identity">
+              {/* URL Builder: method + path */}
+              <div className="endpoint-dialog-url-builder">
+                <select
+                  className="input input--method"
+                  value={draft.method}
+                  onChange={(e) =>
+                    updateDraft({
+                      method: isHttpMethod(e.target.value) ? e.target.value : 'GET',
+                    })
+                  }
+                  aria-label="HTTP 方法"
+                >
+                  {HTTP_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <span className="url-builder-separator">/</span>
+                <input
+                  ref={firstInputRef}
+                  className="input input--path"
+                  value={draft.path}
+                  onChange={(e) => updateDraft({ path: e.target.value })}
+                  placeholder="/api/resource/{id}"
+                  aria-label="接口路径"
                 />
-              ) : (
-                <ParameterTable parameters={draft.parameters} />
-              )
-            ) : tab === 'request' ? (
-              isEditing ? (
-                <RequestBodyEditor
-                  body={requestBody}
-                  schemas={schemas}
-                  onChange={(bodies) => updateDraft({ requestBodies: bodies })}
-                  onCreateSchema={onCreateSchema}
+              </div>
+
+              {/* Summary (inline) — edit/create only; view mode shows it in the title bar */}
+              {isEditing ? (
+                <div className="endpoint-dialog-summary-row">
+                  <input
+                    className="input input--summary"
+                    value={draft.summary}
+                    onChange={(e) => updateDraft({ summary: e.target.value })}
+                    placeholder="接口摘要（如：获取用户列表）"
+                    aria-label="接口摘要"
+                  />
+                </div>
+              ) : null}
+
+              {/* Host selector (compact inline) */}
+              {isEditing && hostVariables.length > 0 ? (
+                <div className="endpoint-dialog-host-row">
+                  <Globe size={15} color="var(--brown)" style={{ flexShrink: 0 }} />
+                  <select
+                    className="endpoint-dialog-host-select"
+                    value={draft.hostVariableId ?? (manualHostUrl ? '__manual__' : '')}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__manual__') {
+                        // Keep manual mode active
+                      } else if (val === '') {
+                        updateDraft({ hostVariableId: undefined });
+                        setManualHostUrl('');
+                      } else {
+                        updateDraft({ hostVariableId: val });
+                        setManualHostUrl('');
+                      }
+                    }}
+                    aria-label="选择 Host 变量"
+                  >
+                    <option value="">不使用 Host 变量</option>
+                    {hostVariables.map((v) => {
+                      const resolved = activeEnvironmentId
+                        ? resolveVariableValue(v, activeEnvironmentId)
+                        : v.defaultValue;
+                      return (
+                        <option key={v.id} value={v.id}>
+                          {v.name} → {resolved}
+                        </option>
+                      );
+                    })}
+                    {onCreateHostVariable ? (
+                      <option value="__manual__">✎ 手动输入 URL（自动创建变量）...</option>
+                    ) : null}
+                  </select>
+                  {!draft.hostVariableId && (
+                    <input
+                      className="endpoint-dialog-host-manual-input"
+                      value={manualHostUrl}
+                      onChange={(e) => {
+                        setManualHostUrl(e.target.value);
+                        setHasChanges(true);
+                      }}
+                      placeholder="https://your-service:4000"
+                      aria-label="手动输入 Host URL"
+                    />
+                  )}
+                </div>
+              ) : null}
+              {/* Host displayed in the URL bar inside PreviewView — skip here for view mode */}
+
+              {/* ── URL Preview (thin dark strip) ── */}
+              {isEditing ? (
+                previewUrl.hasContent ? (
+                  <div className="endpoint-dialog-url-preview">
+                    <span className="endpoint-dialog-url-preview-label">预览</span>
+                    <div className="endpoint-dialog-url-preview-content">
+                      {previewUrl.hasBase ? (
+                        <>
+                          <span className="url-scheme">{previewUrl.scheme}</span>
+                          <span className="url-host">{previewUrl.hostPart}</span>
+                        </>
+                      ) : (
+                        <span className="url-no-host">未选择 Host</span>
+                      )}
+                      <span className="url-path">{previewUrl.path || '/'}</span>
+                      {previewUrl.queryString ? (
+                        <>
+                          <span className="url-query-sep">?</span>
+                          {previewUrl.queryEntries.map((p, i) => (
+                            <span key={p.name}>
+                              {i > 0 ? <span className="url-query-sep">&amp;</span> : null}
+                              <span className="url-param-name">{p.name}</span>
+                              <span className="url-param-eq">=</span>
+                              <span className="url-param-value">{p.example ?? '…'}</span>
+                            </span>
+                          ))}
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="endpoint-dialog-url-preview endpoint-dialog-url-preview--empty">
+                    <span className="endpoint-dialog-url-preview-label">预览</span>
+                    <span className="endpoint-dialog-url-preview-hint">
+                      选择 Host 并填写路径后预览完整 URL
+                    </span>
+                  </div>
+                )
+              ) : null}
+
+              {/* Description — edit/create only; view mode shows it in PreviewView */}
+              {isEditing ? (
+                <textarea
+                  className="input input--desc"
+                  value={draft.description ?? ''}
+                  onChange={(e) => updateDraft({ description: e.target.value || undefined })}
+                  placeholder="接口描述（可选，支持 Markdown）"
+                  rows={1}
+                  aria-label="接口描述"
                 />
-              ) : (
-                <RequestBodyView body={requestBody} schemas={schemas} />
-              )
-            ) : tab === 'responses' ? (
-              isEditing ? (
-                <ResponseEditor
-                  responses={draft.responses}
-                  schemas={schemas}
-                  onChange={(responses) => updateDraft({ responses })}
-                  onCreateSchema={onCreateSchema}
-                />
-              ) : (
-                <ResponseList responses={draft.responses} schemas={schemas} />
-              )
-            ) : (
-              <SchemaTab
-                responseSchema={responseSchema}
-                requestSchema={requestBody}
-                schemas={schemas}
-              />
-            )}
-          </div>
+              ) : null}
+
+              {/* Security badge — view mode shows it in PreviewView meta row */}
+            </div>
+          ) : null}
+
+          {/* ── View mode ── */}
+          {mode === 'view' ? (
+            <PreviewView
+              deprecated={draft.deprecated}
+              tags={draft.tags}
+              security={draft.security}
+              parameters={draft.parameters}
+              requestBody={requestBody}
+              responses={draft.responses}
+              schemas={schemas}
+              responseSchema={responseSchema}
+            />
+          ) : (
+            <>
+              {/* ── Tabs ── */}
+              <div className="endpoint-detail-tabs">
+                {(['params', 'request', 'responses', 'schema'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`endpoint-detail-tab${tab === t ? ' active' : ''}`}
+                    onClick={() => setTab(t)}
+                  >
+                    {t === 'params'
+                      ? '参数'
+                      : t === 'request'
+                        ? '请求体'
+                        : t === 'responses'
+                          ? '响应'
+                          : 'Schema'}
+                    {t === 'params' ? (
+                      <span className="badge">{draft.parameters.length}</span>
+                    ) : null}
+                    {t === 'responses' ? (
+                      <span className="badge">{draft.responses.length}</span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Tab content ── */}
+              <div className="endpoint-detail-body">
+                {tab === 'params' ? (
+                  isEditing ? (
+                    <ParameterEditor
+                      parameters={draft.parameters}
+                      onChange={(params) => updateDraft({ parameters: params })}
+                    />
+                  ) : (
+                    <ParameterTable parameters={draft.parameters} />
+                  )
+                ) : tab === 'request' ? (
+                  isEditing ? (
+                    <RequestBodyEditor
+                      body={requestBody}
+                      schemas={schemas}
+                      onChange={(bodies) => updateDraft({ requestBodies: bodies })}
+                      onCreateSchema={onCreateSchema}
+                    />
+                  ) : (
+                    <RequestBodyView body={requestBody} schemas={schemas} />
+                  )
+                ) : tab === 'responses' ? (
+                  isEditing ? (
+                    <ResponseEditor
+                      responses={draft.responses}
+                      schemas={schemas}
+                      onChange={(responses) => updateDraft({ responses })}
+                      onCreateSchema={onCreateSchema}
+                    />
+                  ) : (
+                    <ResponseList responses={draft.responses} schemas={schemas} />
+                  )
+                ) : (
+                  <SchemaTab
+                    responseSchema={responseSchema}
+                    requestSchema={requestBody}
+                    schemas={schemas}
+                  />
+                )}
+              </div>
+            </>
+          )}
 
           {/* ── Footer: tags + deprecated + actions ── */}
           {isEditing ? (

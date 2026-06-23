@@ -14,8 +14,6 @@ export function SourceSelector({
   onSelect,
   onManage,
 }: SourceSelectorProps) {
-  const selected = sources.find((s) => s.id === selectedSourceId);
-
   return (
     <div className="source-selector">
       <Database size={16} weight="fill" />
@@ -41,9 +39,6 @@ export function SourceSelector({
       >
         <Gear size={15} />
       </button>
-      {selected?.defaultBaseUrl ? (
-        <span className="source-baseurl">{selected.defaultBaseUrl}</span>
-      ) : null}
     </div>
   );
 }

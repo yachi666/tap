@@ -18,7 +18,6 @@ function emptySource(): ApiSource {
     description: '',
     sourceLabel: '',
     sourceType: 'openapi',
-    defaultBaseUrl: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -66,7 +65,6 @@ export function ApiSourceDialog({ source, open, onClose, onSaved }: ApiSourceDia
       description: saved.description || undefined,
       sourceLabel: saved.sourceLabel,
       sourceType: saved.sourceType,
-      defaultBaseUrl: saved.defaultBaseUrl || undefined,
       createdAt: saved.createdAt,
       updatedAt: saved.updatedAt,
     });
@@ -159,29 +157,6 @@ export function ApiSourceDialog({ source, open, onClose, onSaved }: ApiSourceDia
               value={draft.sourceLabel}
               onChange={(e) => setDraft((d) => ({ ...d, sourceLabel: e.target.value }))}
               placeholder="例如：user-service.yaml"
-              style={{ display: 'block', width: '100%' }}
-            />
-          </label>
-
-          <label className="modal-field" style={{ display: 'block', marginBottom: 14 }}>
-            <span
-              style={{
-                display: 'block',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                color: 'var(--ink-soft)',
-                marginBottom: 4,
-              }}
-            >
-              默认 Base URL
-            </span>
-            <input
-              className="input input--path"
-              value={draft.defaultBaseUrl ?? ''}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, defaultBaseUrl: e.target.value || undefined }))
-              }
-              placeholder="例如：http://localhost:8080"
               style={{ display: 'block', width: '100%' }}
             />
           </label>

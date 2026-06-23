@@ -30,6 +30,7 @@ export function ParameterEditor({ parameters, onChange }: ParameterEditorProps) 
       required: false,
       deprecated: false,
       type: 'string',
+      example: '',
     };
     onChange([...parameters, newParam]);
   };
@@ -140,6 +141,13 @@ export function ParameterEditor({ parameters, onChange }: ParameterEditorProps) 
                 />
                 必填
               </label>
+              <input
+                className="input input--cell input--example"
+                value={p.example ?? ''}
+                onChange={(e) => updateParam(idx, { example: e.target.value || undefined })}
+                placeholder="示例值"
+                aria-label="参数示例值"
+              />
               <input
                 className="input input--cell input--wide"
                 value={p.description ?? ''}

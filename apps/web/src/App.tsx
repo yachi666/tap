@@ -32,6 +32,7 @@ import { Folders } from '@phosphor-icons/react/Folders';
 import { GearSix } from '@phosphor-icons/react/GearSix';
 import { GitBranch } from '@phosphor-icons/react/GitBranch';
 import { GitCommit } from '@phosphor-icons/react/GitCommit';
+import { Globe } from '@phosphor-icons/react/Globe';
 import { House } from '@phosphor-icons/react/House';
 import { Info } from '@phosphor-icons/react/Info';
 import { Key } from '@phosphor-icons/react/Key';
@@ -2366,11 +2367,19 @@ function VariableDialog({
   const [description, setDescription] = useState('');
   const [showValue, setShowValue] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [tags, setTags] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const nameRef = useRef<HTMLInputElement>(null);
 
   // Only show per-environment overrides when scope is 'environment'
   const showEnvOverrides = scope === 'environment' && environments.length > 0;
+
+  // Auto-tag: if defaultValue starts with http:// or https://, ensure 'host' tag
+  useEffect(() => {
+    if (/^https?:\/\//.test(defaultValue.trim())) {
+      setTags((prev) => (prev.includes('host') ? prev : [...prev, 'host']));
+    }
+  }, [defaultValue]);
 
   useEffect(() => {
     if (open && mode === 'edit' && variable) {
@@ -2382,6 +2391,7 @@ function VariableDialog({
       setSourceId(variable.sourceId ?? '');
       setDescription(variable.description);
       setOverrides({ ...variable.overrides });
+      setTags(variable.tags ?? []);
       setShowValue(false);
       setErrors({});
     } else if (open && mode === 'create') {
@@ -2393,6 +2403,7 @@ function VariableDialog({
       setSourceId('');
       setDescription('');
       setOverrides({});
+      setTags([]);
       setShowValue(false);
       setErrors({});
     }
@@ -2436,6 +2447,7 @@ function VariableDialog({
       type,
       scope,
       sourceId: sourceId || undefined,
+      tags,
       sensitive,
       description: description.trim(),
       updatedAt: now,
@@ -2624,6 +2636,56 @@ function VariableDialog({
               rows={3}
             />
           </label>
+
+          {/* Tags */}
+          <div className="variable-field" style={{ marginBottom: 16 }}>
+            <span className="field-label">
+              标签
+              <small className="field-hint">（HTTP/HTTPS 值自动添加 "host" 标签）</small>
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    background: tag === 'host' ? 'var(--blue-100)' : 'var(--ink-subtle)',
+                    color: tag === 'host' ? 'var(--blue-700)' : 'var(--ink-soft)',
+                  }}
+                >
+                  {tag === 'host' ? <Globe size={11} /> : null}
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
+                    aria-label={`移除标签 ${tag}`}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      color: 'inherit',
+                      opacity: 0.6,
+                    }}
+                  >
+                    <X size={10} weight="bold" />
+                  </button>
+                </span>
+              ))}
+              {tags.length === 0 ? (
+                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
+                  无标签 · 以 http:// 或 https:// 开头的值会自动添加 "host" 标签
+                </span>
+              ) : null}
+            </div>
+          </div>
 
           {/* Usage info (edit mode only) */}
           {mode === 'edit' && variable && variable.usedIn.length > 0 ? (
@@ -2966,6 +3028,20 @@ function VariablesView({
                 <div className="data-row" key={v.id}>
                   <span>
                     <code className="variable-name-code">{v.name}</code>
+                    {v.tags?.includes('host') ? (
+                      <span
+                        className="host-tag-badge"
+                        title="Host 变量，可在接口编辑中选择作为服务地址"
+                        style={{
+                          display: 'inline-flex',
+                          marginLeft: 4,
+                          color: 'var(--blue-500)',
+                          verticalAlign: 'middle',
+                        }}
+                      >
+                        <Globe size={11} weight="fill" />
+                      </span>
+                    ) : null}
                     {v.sensitive ? (
                       <span className="sensitive-dot" title="敏感变量，日志中自动脱敏">
                         <EyeSlash size={11} weight="fill" />
@@ -3319,6 +3395,14 @@ export function App() {
                 v['overrides'] && typeof v['overrides'] === 'object'
                   ? (v['overrides'] as Record<string, string>)
                   : {},
+              tags: Array.isArray(v['tags']) ? v['tags'] : [],
+            })) as Variable[];
+          }
+          // Migrate: ensure all variables have tags field
+          if (!('tags' in first)) {
+            return (parsed as Array<Record<string, unknown>>).map((v) => ({
+              ...v,
+              tags: Array.isArray(v['tags']) ? v['tags'] : [],
             })) as Variable[];
           }
         }
@@ -3596,11 +3680,21 @@ export function App() {
         schemas={apiSchemas}
         diff={versionDiff}
         imported={imported}
+        variables={variables}
+        activeEnvironmentId={activeEnvironmentId}
         onImport={importApi}
         onCreate={handleCreateEndpoint}
         onUpdate={handleUpdateEndpoint}
         onDelete={handleDeleteEndpoint}
         onCreateSchema={handleCreateSchema}
+        onCreateVariable={(v) =>
+          setVariables((prev) => {
+            const next = [v, ...prev];
+            lsSetJSON(LS_VARIABLES_KEY, next);
+            notify(`Host 变量 "${v.name}" 已自动创建`);
+            return next;
+          })
+        }
         onManageSources={handleManageSources}
         onSourceCreated={handleSourceSaved}
       />

@@ -113,7 +113,6 @@ export interface StoredApiSource {
   description?: string;
   sourceLabel: string;
   sourceType: string;
-  defaultBaseUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

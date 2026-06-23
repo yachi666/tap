@@ -130,7 +130,8 @@ export interface ApiVersionInfo {
 
 // ─── API Source (系统) ───────────────────────────────────────────
 
-/** A source system providing a set of API endpoints (e.g. "User Service", "Payment Service"). */
+/** A source system providing a set of API endpoints (e.g. "User Service", "Payment Service").
+ *  Service hosts are managed exclusively through Variables with `tags: ['host']`. */
 export interface ApiSource {
   id: EntityId;
   /** Display name, e.g. "用户服务". */
@@ -139,8 +140,6 @@ export interface ApiSource {
   /** Original file or identifier, e.g. "user-service.yaml". */
   sourceLabel: string;
   sourceType: 'openapi' | 'raml' | 'manual';
-  /** Default server URL for this source system. */
-  defaultBaseUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -197,6 +196,8 @@ export interface EndpointDetail {
   responses: ApiResponseDef[];
   /** Security requirements, e.g. [{ "BearerAuth": [] }]. */
   security?: Record<string, string[]>[];
+  /** Optional reference to a Host-tagged variable that provides the base URL for this endpoint. */
+  hostVariableId?: EntityId;
 }
 
 // ─── Schema Viewer ──────────────────────────────────────────────
@@ -385,6 +386,8 @@ export interface Variable {
   scope: VariableScope;
   /** When scope is 'environment', optionally associates this variable with a specific ApiSource for organizational grouping. */
   sourceId?: EntityId;
+  /** Tags for classification, e.g. ["host"] for service URL variables that can be selected in the endpoint editor. */
+  tags: string[];
   /** Whether this variable contains sensitive data (always true for secrets). */
   sensitive: boolean;
   /** Human-readable description. */

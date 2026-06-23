@@ -21,6 +21,7 @@ import type {
   ApiVersionInfo,
   EndpointDetail,
   SchemaDisplayNode,
+  Variable,
 } from '../types';
 import type { ImportConfig } from '../types/import';
 
@@ -41,6 +42,7 @@ function emptyEndpointDetail(): EndpointDetail {
     requestBodies: [],
     responses: [],
     security: [],
+    hostVariableId: undefined,
   };
 }
 
@@ -62,6 +64,7 @@ function detailFromEndpoint(
     parameters: [],
     requestBodies: [],
     responses: [],
+    hostVariableId: undefined,
   };
 }
 
@@ -73,12 +76,15 @@ interface ApiViewProps {
   schemas: Record<string, SchemaDisplayNode>;
   diff: ApiVersionDiff | null;
   imported: boolean;
+  variables: Variable[];
+  activeEnvironmentId: string;
   onImport: (config: ImportConfig) => void;
   onCreate: (endpoint: ApiEndpoint, detail: EndpointDetail) => void;
   onUpdate: (endpoint: ApiEndpoint, detail: EndpointDetail) => void;
   onDelete: (endpointId: string) => void;
   onAddToWorkflow?: (endpointId: string) => void;
   onCreateSchema?: (schema: SchemaDisplayNode) => void;
+  onCreateVariable?: (v: Variable) => void;
   onManageSources?: () => void;
   onSourceCreated?: (source: ApiSource) => void;
 }
@@ -101,12 +107,15 @@ export function ApiView({
   schemas,
   diff,
   imported,
+  variables,
+  activeEnvironmentId,
   onImport,
   onCreate,
   onUpdate,
   onDelete,
   onAddToWorkflow,
   onCreateSchema,
+  onCreateVariable,
   onManageSources,
   onSourceCreated,
 }: ApiViewProps) {
@@ -153,6 +162,12 @@ export function ApiView({
     return merged.filter((ep) => ep.versionId && sourceVersionIds.has(ep.versionId));
   }, [endpoints, importedEndpoints, selectedSourceId, allVersions]);
   const activeVersion = useMemo(() => allVersions.find((v) => v.isActive) ?? null, [allVersions]);
+
+  // Host-tagged variables available for endpoint base URL selection
+  const hostVariables = useMemo(
+    () => variables.filter((v) => v.tags?.includes('host')),
+    [variables],
+  );
 
   // Compute workflow usage per endpoint
   const usedInWorkflows = useMemo(() => {
@@ -252,6 +267,58 @@ export function ApiView({
       onAddToWorkflow?.(endpointId);
     },
     [onAddToWorkflow],
+  );
+
+  /** Create a Host-tagged variable from a manually entered URL. */
+  const handleCreateHostVariable = useCallback(
+    (url: string): Variable => {
+      // Derive a variable name from the URL hostname
+      let hostname = '';
+      try {
+        hostname = new URL(url).hostname;
+      } catch {
+        hostname = url
+          .replace(/^https?:\/\//, '')
+          .split('/')[0]
+          .split(':')[0];
+      }
+      const varName =
+        hostname
+          .split('.')[0]
+          .replace(/[^a-zA-Z0-9]/g, '_')
+          .replace(/^[_0-9]+/, '')
+          .replace(/^_/, '') || `host_${Date.now()}`;
+
+      // Ensure unique name by appending suffix if needed
+      const existingNames = new Set(variables.map((v) => v.name));
+      let uniqueName = varName;
+      let suffix = 1;
+      while (existingNames.has(uniqueName)) {
+        uniqueName = `${varName}_${suffix}`;
+        suffix += 1;
+      }
+
+      const now = new Date().toISOString();
+      const newVar: Variable = {
+        id: `var-${Date.now()}`,
+        name: uniqueName,
+        defaultValue: url,
+        overrides: {},
+        type: 'plain',
+        scope: 'environment',
+        sourceId: selectedSourceId ?? undefined,
+        tags: ['host'],
+        sensitive: false,
+        description: `自动创建的 Host 变量，指向 ${url}`,
+        updatedAt: now,
+        updatedBy: 'system',
+        usedIn: [],
+      };
+
+      onCreateVariable?.(newVar);
+      return newVar;
+    },
+    [variables, selectedSourceId, onCreateVariable],
   );
 
   // ── Import handlers ──
@@ -541,6 +608,9 @@ export function ApiView({
           mode={panelMode}
           schemas={schemas}
           existingIds={allEndpoints.map((e) => e.id)}
+          hostVariables={hostVariables}
+          activeEnvironmentId={activeEnvironmentId}
+          onCreateHostVariable={onCreateVariable ? handleCreateHostVariable : undefined}
           onSave={handleSave}
           onDelete={panelMode === 'edit' ? handleDelete : undefined}
           onAddToWorkflow={panelMode === 'view' ? handleAddToWorkflow : undefined}
