@@ -7,7 +7,9 @@
 ```bash
 pnpm install               # Install all dependencies
 pnpm dev                   # Start all apps in dev mode (turbo)
-pnpm dev:web               # Start only the React web app
+pnpm dev:web               # Start only the React web app (port 5173)
+pnpm dev:cp                # Start only the Control Plane (port 3802, needs PostgreSQL)
+pnpm dev:runner            # Start only the Runner
 pnpm dev:fixture           # Start the Hermetic Fixture Server (port 3800)
 pnpm test                  # Run all tests (vitest, turbo orchestrated)
 pnpm build                 # Build all packages and apps
@@ -25,7 +27,8 @@ pnpm clean                 # Remove all dist/ directories
 sketch-test/
 ├── apps/
 │   ├── web/                    # React 19 + Vite 6 — workflow editor, run timeline
-│   ├── control-plane/          # NestJS + Fastify (empty skeleton — WIP)
+│   ├── control-plane/          # Fastify API server — IAM, import, runs, workflows, scheduling
+│   ├── cli/                    # CLI tool for CI/CD integration (GitHub Actions, GitLab CI)
 │   └── runner/                 # Independent Node.js process — executes HTTP tests
 ├── packages/
 │   ├── contracts/              # 5 shared, versioned Zod contracts (THE stable seams)
@@ -35,7 +38,11 @@ sketch-test/
 │   │   ├── test-dsl/           #   @sketch-test/test-dsl — TestDefinition, assertions, extraction
 │   │   └── workflow-dsl/       #   @sketch-test/workflow-dsl — WorkflowDefinition, steps, teardown
 │   ├── adapters/
-│   │   └── openapi/            # OpenAPI → CanonicalApiModel adapter
+│   │   ├── format-detector/    # Auto-detect import format (OpenAPI, Postman, HAR, cURL)
+│   │   ├── openapi/            # OpenAPI 3.x → CanonicalApiModel adapter
+│   │   ├── postman/            # Postman Collection v2.1 → CanonicalApiModel adapter
+│   │   ├── har/                # HAR 1.2 → CanonicalApiModel adapter
+│   │   └── raml/               # RAML 1.0 → CanonicalApiModel adapter (in progress)
 │   └── test-fixtures/
 │       └── hermetic-fixture-server/  # Deterministic REST API for integration testing
 └── tooling/
@@ -44,11 +51,11 @@ sketch-test/
 
 ## Architecture (from [docs/TECHNICAL_ARCHITECTURE.md](docs/TECHNICAL_ARCHITECTURE.md))
 
-- **Control Plane**: TypeScript modular monolith (NestJS + Fastify) — project catalog, API assets, test definitions, workflows, scheduling, reporting, authorization.
+- **Control Plane**: Fastify API server — workspace/project management, API import, test authoring, workflow compilation, run orchestration, scheduling, reporting, IAM with JWT auth.
 - **Runner**: Independent Node.js/TypeScript process. Deployed near the system under test. Pulls tasks via lease, executes HTTP requests, redacts secrets, uploads events.
-- **AI Worker**: Independent TypeScript worker for spec parsing, Git analysis, and draft generation.
-- **PostgreSQL**: Transactional metadata and run indexes.
-- **S3-compatible object storage**: Raw specs, request/response artifacts, generated outputs.
+- **AI Worker**: Planned for M3 — spec parsing, Git analysis, and draft generation.
+- **PostgreSQL**: Transactional metadata and run indexes. 22 tables covering M0–M2 schema.
+- **S3-compatible object storage**: Raw specs, request/response artifacts, generated outputs (not yet integrated).
 - **No Kafka in V1** — task scheduling uses PostgreSQL persistent tasks and leases.
 
 **Critical rule**: Control Plane, Runner, and AI Worker must be independent processes. They share versioned contracts, not process lifecycles. If a hotspot needs Go/Rust/Python later, replace behind the existing seam — never change the contract.
@@ -86,22 +93,29 @@ Use the canonical terms and product principles from [CONTEXT.md](CONTEXT.md). Ke
 ## Testing
 
 - **Unit tests**: `vitest run` per package — fast, no external dependencies.
-- **Golden tests**: the canonical-api-model contract package has golden tests (`__tests__/golden.test.ts`) that serialize Zod output to JSON and compare against checked-in snapshots (remaining contract packages in progress).
+- **Golden tests**: all 5 contract packages have golden tests that serialize Zod output to JSON and compare against checked-in snapshots.
+- **Adapter tests**: each adapter (OpenAPI, Postman, HAR, RAML, format-detector) has fixture-based tests.
 - **Integration tests**: use the Hermetic Fixture Server (`packages/test-fixtures/hermetic-fixture-server`). It provides a deterministic REST API (users, auth, orders, payments) with fixed clock, fixed random seed, and fault injection. Start with `pnpm dev:fixture`.
 - **Fault injection**: Set `FAULT_MODE=timeout|500|slow` and `FAULT_TARGET=/api/payments` to inject faults into specific endpoints.
+- **Control Plane and Web app** do not yet have automated tests — this is a known gap.
 
-## Current milestone: M0 (feasibility)
+## Current status
 
-Per [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md), we are in M0. Delivered so far:
+M0 (feasibility) is complete. M1 and M2 features are in active development. Key modules built:
+
 - ✅ Monorepo setup with pnpm workspace, TypeScript strict, Biome, Vitest, Turbo
-- ✅ 5 contract packages with Zod schemas (golden tests for canonical-api-model; remaining in progress)
-- ✅ OpenAPI → CanonicalApiModel adapter
+- ✅ 5 contract packages with Zod schemas and golden tests
+- ✅ 5 adapters: OpenAPI, Postman, HAR, RAML, format-detector
 - ✅ Runner with HTTP execution, assertion evaluation, variable extraction, redaction
 - ✅ Hermetic Fixture Server with 8 business process scenarios (BP-01 through BP-08)
 - ✅ CI pipeline (`.github/workflows/ci.yml`)
-- 🔲 Control Plane (NestJS/Fastify) — skeleton only
+- ✅ Control Plane: 14 modules, ~80 API endpoints, 22 database tables (M0–M2 schema)
+- ✅ Workflow Compiler (677 lines) — compiles WorkflowDefinitions into ExecutionPlans
+- ✅ Web app: 10 pages, 7 Zustand stores, connected to Control Plane
+- ✅ CLI tool with GitHub Actions and GitLab CI examples
+- 🔲 Control Plane and Web automated tests
 - 🔲 AI Worker
-- 🔲 Workflow Compiler
+- 🔲 S3 object storage integration
 
 ## Docs index
 
