@@ -326,11 +326,13 @@ export function createRunFromSteps(rawSteps: CustomStep[]) {
   };
 
   // Insert into DB (api_version_id is null for custom runs)
-  pool.query(
-    `INSERT INTO runs (id, api_version_id, status, plan_json)
+  pool
+    .query(
+      `INSERT INTO runs (id, api_version_id, status, plan_json)
      VALUES ($1, NULL, 'pending', $2)`,
-    [id, JSON.stringify(plan)],
-  ).catch((err) => console.error('[run] Failed to insert run:', err));
+      [id, JSON.stringify(plan)],
+    )
+    .catch((err) => console.error('[run] Failed to insert run:', err));
 
   return { runId: id, plan };
 }

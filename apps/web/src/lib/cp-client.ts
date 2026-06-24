@@ -73,27 +73,29 @@ export const cpClient = {
     );
   },
 
-  createCustomRun(steps: Array<{
-    method: string;
-    url: string;
-    headers?: Record<string, string>;
-    body?: unknown;
-    assertions?: Array<{
-      description?: string;
-      target: string;
-      path?: string;
-      operator: string;
-      expected?: unknown;
-      severity?: string;
-    }>;
-    extractions?: Array<{
-      name: string;
-      source: string;
-      expression: string;
-      sensitive?: boolean;
-    }>;
-    timeoutMs?: number;
-  }>): Promise<{ runId: string; plan: unknown }> {
+  createCustomRun(
+    steps: Array<{
+      method: string;
+      url: string;
+      headers?: Record<string, string>;
+      body?: unknown;
+      assertions?: Array<{
+        description?: string;
+        target: string;
+        path?: string;
+        operator: string;
+        expected?: unknown;
+        severity?: string;
+      }>;
+      extractions?: Array<{
+        name: string;
+        source: string;
+        expression: string;
+        sensitive?: boolean;
+      }>;
+      timeoutMs?: number;
+    }>,
+  ): Promise<{ runId: string; plan: unknown }> {
     return request<{ runId: string; plan: unknown }>('/api/runs', {
       method: 'POST',
       body: JSON.stringify({ steps }),
