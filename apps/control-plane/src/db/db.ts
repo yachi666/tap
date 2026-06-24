@@ -29,7 +29,7 @@ export async function runMigrations(): Promise<void> {
 
       CREATE TABLE IF NOT EXISTS runs (
         id              TEXT PRIMARY KEY,
-        api_version_id  TEXT NOT NULL REFERENCES api_versions(id),
+        api_version_id  TEXT REFERENCES api_versions(id),
         status          TEXT NOT NULL DEFAULT 'pending',
         plan_json       JSONB NOT NULL,
         runner_id       TEXT,

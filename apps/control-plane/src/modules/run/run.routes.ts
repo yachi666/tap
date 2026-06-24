@@ -1,7 +1,60 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { pool } from '../../db/db.js';
 import { sendError } from '../../shared/errors.js';
-import { createFixtureRun, getApiVersion, getRun, listRuns } from './run.service.js';
+import {
+  createFixtureRun,
+  createRunFromSteps,
+  getApiVersion,
+  getRun,
+  listRuns,
+} from './run.service.js';
+
+const CustomRunBodySchema = z.object({
+  steps: z
+    .array(
+      z.object({
+        method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']),
+        url: z.string().min(1).max(4096),
+        headers: z.record(z.string(), z.string()).optional(),
+        body: z.unknown().optional(),
+        assertions: z
+          .array(
+            z.object({
+              description: z.string().max(1024).optional(),
+              target: z.enum(['status', 'header', 'jsonPath', 'body', 'responseTime']),
+              path: z.string().max(1024).optional(),
+              operator: z.enum([
+                'equals',
+                'notEquals',
+                'contains',
+                'notContains',
+                'exists',
+                'notExists',
+                'greaterThan',
+                'lessThan',
+              ]),
+              expected: z.unknown().optional(),
+              severity: z.enum(['block', 'warn']).default('block'),
+            }),
+          )
+          .optional(),
+        extractions: z
+          .array(
+            z.object({
+              name: z.string().min(1).max(128),
+              source: z.enum(['body', 'header', 'cookie', 'status']),
+              expression: z.string().min(1).max(1024),
+              sensitive: z.boolean().default(false),
+            }),
+          )
+          .optional(),
+        timeoutMs: z.number().int().positive().max(300_000).default(30_000),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
 
 export async function runRoutes(app: FastifyInstance): Promise<void> {
   /** List all imported API versions. */
@@ -48,6 +101,19 @@ export async function runRoutes(app: FastifyInstance): Promise<void> {
 
     const { runId, plan } = await createFixtureRun(id);
     reply.send({ runId, plan });
+  });
+
+  /** Create a Run from custom steps. */
+  app.post('/api/runs', async (request, reply) => {
+    const parsed = CustomRunBodySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, 400, 'INVALID_INPUT', 'Invalid run definition', [
+        { field: 'body', message: parsed.error.message },
+      ]);
+    }
+
+    const { runId, plan } = createRunFromSteps(parsed.data.steps);
+    reply.status(201).send({ runId, plan });
   });
 
   /** List all runs. */

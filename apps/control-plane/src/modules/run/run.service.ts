@@ -255,6 +255,86 @@ export async function createFixtureRun(apiVersionId: string) {
   return { runId: id, plan };
 }
 
+interface CustomStep {
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  body?: unknown;
+  assertions?: Array<{
+    description?: string;
+    target: string;
+    path?: string;
+    operator: string;
+    expected?: unknown;
+    severity: string;
+  }>;
+  extractions?: Array<{
+    name: string;
+    source: string;
+    expression: string;
+    sensitive: boolean;
+  }>;
+  timeoutMs: number;
+}
+
+/** Create a Run from user-defined steps (from the web workflow editor). */
+export function createRunFromSteps(rawSteps: CustomStep[]) {
+  const id = runId();
+  const planId = id;
+  const now = new Date().toISOString();
+
+  const steps: FrozenStep[] = rawSteps.map((s, i) => ({
+    stepId: `${planId}-step-${i}`,
+    sequence: i,
+    method: s.method as FrozenStep['method'],
+    urlTemplate: s.url,
+    headers: s.headers,
+    body: s.body,
+    maxRetries: 0,
+    retryBaseDelayMs: 1000,
+    retryBackoffMultiplier: 2,
+    retryOnNetworkError: false,
+    onFailure: 'stop' as const,
+    assertions: (s.assertions ?? []).map((a, ai) => ({
+      id: `${planId}-assert-${i}-${ai}`,
+      description: a.description,
+      target: a.target as FrozenStep['assertions'][0]['target'],
+      path: a.path,
+      operator: a.operator as FrozenStep['assertions'][0]['operator'],
+      expected: a.expected,
+      severity: (a.severity ?? 'block') as FrozenStep['assertions'][0]['severity'],
+    })),
+    extractions: (s.extractions ?? []).map((e) => ({
+      name: e.name,
+      source: e.source as 'body' | 'header' | 'cookie' | 'status',
+      expression: e.expression,
+      scope: 'workflow' as const,
+      sensitive: e.sensitive,
+    })),
+    sideEffect: 'read-only' as const,
+    enabled: true,
+    timeoutMs: s.timeoutMs ?? 30_000,
+  }));
+
+  const plan: ExecutionPlan = {
+    schemaVersion: 'sketch-test.runner-protocol/v1',
+    planId,
+    planHash: '0'.repeat(64),
+    workflowVersionId: id,
+    compiledAt: now,
+    steps,
+  };
+
+  // Insert into DB (api_version_id is null for custom runs)
+  pool.query(
+    `INSERT INTO runs (id, api_version_id, status, plan_json)
+     VALUES ($1, NULL, 'pending', $2)`,
+    [id, JSON.stringify(plan)],
+  ).catch((err) => console.error('[run] Failed to insert run:', err));
+
+  return { runId: id, plan };
+}
+
 /** Get a run by ID. */
 export async function getRun(id: string) {
   const result = await pool.query(`SELECT * FROM runs WHERE id = $1`, [id]);
