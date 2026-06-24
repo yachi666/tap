@@ -20,7 +20,9 @@
     "@vitejs/plugin-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "vite": "catalog:"
+    "react-router-dom": "^7.18.0",
+    "vite": "catalog:",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "catalog:",
