@@ -120,14 +120,11 @@ export function useFetch<T>(
   fetcher: () => Promise<T>,
   deps: unknown[] = [],
 ): { data: T | null; loading: boolean; error: string | null; refetch: () => Promise<void> } {
-  const [state, setState] = (() => {
-    // Simple state management without external dep
-    let s = { data: null as T | null, loading: false, error: null as string | null };
-    const update = (partial: Partial<typeof s>) => {
-      s = { ...s, ...partial };
-    };
-    return { getState: () => s, setState: update };
-  })();
+  // eslint-disable-next-line prefer-const
+  let state = { data: null as T | null, loading: false, error: null as string | null };
+  const setState = (partial: Partial<typeof state>) => {
+    state = { ...state, ...partial };
+  };
 
   const execute = useCallback(async () => {
     state.loading = true;

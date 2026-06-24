@@ -7,7 +7,7 @@
  * Uses localStorage as fallback when CP is unreachable (offline dev mode).
  */
 
-const CP_BASE = import.meta.env.VITE_CP_BASE ?? 'http://localhost:3802';
+const CP_BASE = import.meta.env['VITE_CP_BASE'] ?? 'http://localhost:3802';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${CP_BASE}${path}`, {

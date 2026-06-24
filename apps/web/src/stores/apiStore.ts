@@ -129,7 +129,7 @@ export const useApiStore = create<ApiState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { apiVersions } = await cpClient.listApiVersions();
-      const mapped = apiVersions.map((v: Record<string, unknown>) => ({
+      const mapped = (apiVersions as Array<Record<string,unknown>>).map((v) => ({
         id: v['id'] as string,
         sourceType: v['source_type'] as string,
         sourceLocation: v['source_location'] as string,
