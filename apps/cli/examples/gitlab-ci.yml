@@ -1,0 +1,33 @@
+api-regression:
+  stage: test
+  image: node:22
+
+  script:
+    - npm install -g @sketch-test/cli
+    - sketchtest run ts_critical --environment env_staging --output text
+
+  artifacts:
+    when: always
+    paths:
+      - sketchtest-results.json
+
+  variables:
+    SKETCHTEST_TOKEN: $SKETCHTEST_TOKEN
+    SKETCHTEST_CP_URL: $SKETCHTEST_CP_URL
+
+api-smoke:
+  stage: test
+  image: node:22
+
+  script:
+    - npm install -g @sketch-test/cli
+    - sketchtest run ts_smoke --environment env_staging --output text --timeout 180
+
+  artifacts:
+    when: always
+    paths:
+      - sketchtest-results.json
+
+  variables:
+    SKETCHTEST_TOKEN: $SKETCHTEST_TOKEN
+    SKETCHTEST_CP_URL: $SKETCHTEST_CP_URL

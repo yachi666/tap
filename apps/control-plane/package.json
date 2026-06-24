@@ -17,6 +17,7 @@
     "@sketch-test/contracts-common": "workspace:*",
     "@sketch-test/canonical-api-model": "workspace:*",
     "@sketch-test/runner-protocol": "workspace:*",
+    "@sketch-test/test-dsl": "workspace:*",
     "@sketch-test/adapter-openapi": "workspace:*",
     "fastify": "^5.0.0",
     "pg": "^8.13.0",

@@ -1,0 +1,43 @@
+name: SketchTest API Regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install SketchTest CLI
+        run: npm install -g @sketch-test/cli
+
+      - name: Run API regression suite
+        env:
+          SKETCHTEST_TOKEN: ${{ secrets.SKETCHTEST_TOKEN }}
+          SKETCHTEST_CP_URL: ${{ vars.SKETCHTEST_CP_URL }}
+        run: |
+          sketchtest run ts_critical \
+            --environment env_staging \
+            --idempotency-key "${{ github.sha }}-${{ github.run_attempt }}" \
+            --output github \
+            --timeout 600
+
+      - name: Run smoke tests (always)
+        if: always()
+        env:
+          SKETCHTEST_TOKEN: ${{ secrets.SKETCHTEST_TOKEN }}
+          SKETCHTEST_CP_URL: ${{ vars.SKETCHTEST_CP_URL }}
+        run: |
+          sketchtest run ts_smoke \
+            --environment env_staging \
+            --output github \
+            --timeout 300

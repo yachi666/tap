@@ -1,0 +1,21 @@
+{
+  "name": "@sketch-test/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "sketchtest": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@sketch-test/contracts-common": "workspace:*",
+    "@sketch-test/runner-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "@types/node": "catalog:"
+  }
+}
