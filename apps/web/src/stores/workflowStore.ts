@@ -8,7 +8,10 @@ import {
   lsSet,
   lsSetJSON,
 } from '../lib/storage';
+import { cpClient } from '../lib/cp-client';
 import type { ExecutionLog, RunState, WorkflowStep } from '../types';
+
+const FIXTURE_BASE = 'http://localhost:3800';
 
 interface WorkflowState {
   activeWorkflowId: string | null;
@@ -17,6 +20,7 @@ interface WorkflowState {
   logs: ExecutionLog[];
   runState: RunState;
   runningRef: { current: boolean };
+  currentRunId: string | null;
 
   setActiveWorkflowId: (id: string | null) => void;
   setSteps: (stepsOrUpdater: WorkflowStep[] | ((prev: WorkflowStep[]) => WorkflowStep[])) => void;
@@ -30,6 +34,39 @@ interface WorkflowState {
 }
 
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+function stepToCpFormat(step: WorkflowStep) {
+  return {
+    method: step.method,
+    url: `${FIXTURE_BASE}${step.path}`,
+    headers:
+      step.method === 'POST' || step.method === 'PUT' || step.method === 'PATCH'
+        ? { 'Content-Type': 'application/json' }
+        : undefined,
+    assertions: [
+      { target: 'status' as const, operator: 'equals' as const, expected: step.expectedStatus },
+      ...(step.assertion
+        ? [
+            {
+              target: 'jsonPath' as const,
+              path: step.assertion.split(' ')[0] ?? step.assertion,
+              operator: 'exists' as const,
+            },
+          ]
+        : []),
+    ],
+    extractions: step.variableName
+      ? [
+          {
+            name: step.variableName,
+            source: 'body' as const,
+            expression: step.variablePath || '$.data',
+            sensitive: false,
+          },
+        ]
+      : undefined,
+  };
+}
 
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   activeWorkflowId: (() => {
@@ -69,6 +106,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   logs: initialLogs,
   runState: 'idle' as RunState,
   runningRef: { current: false },
+  currentRunId: null,
 
   setActiveWorkflowId: (id) => set({ activeWorkflowId: id }),
   setSteps: (stepsOrUpdater) =>
@@ -113,43 +151,66 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     if (runningRef.current) return;
     runningRef.current = true;
 
-    set({ runState: 'running' });
-    set((state) => ({
-      logs: state.logs.map((log) => ({ ...log, status: 'queued' })),
-    }));
+    set({ runState: 'running', currentRunId: null });
 
-    const currentSteps = steps;
-    for (let index = 0; index < currentSteps.length; index += 1) {
-      const step = currentSteps[index];
-      set({ selectedId: step.id });
+    // Map current steps to CP API format
+    const cpSteps = steps.map(stepToCpFormat);
+
+    try {
+      // Create run on CP
+      const { runId } = await cpClient.createCustomRun(cpSteps);
+      set({ currentRunId: runId });
+
+      // Set all logs to running
       set((state) => ({
-        logs: state.logs.map((log) =>
-          log.stepId === step.id
-            ? {
+        logs: state.logs.map((log) => ({ ...log, status: 'running' as const })),
+      }));
+
+      // Poll for completion (max 30s)
+      for (let i = 0; i < 30; i++) {
+        await sleep(1000);
+        const detail = await cpClient.getRun(runId);
+
+        // Update logs from step events
+        const stepEvents = detail.steps;
+        const stepStatuses = new Map<number, string>();
+
+        for (const evt of stepEvents) {
+          if (evt.eventType === 'step.finished') {
+            const payload = evt.payload as Record<string, unknown>;
+            stepStatuses.set(evt.stepIndex, (payload?.['status'] as string) ?? 'error');
+          }
+        }
+
+        set((state) => ({
+          logs: state.logs.map((log, idx) => {
+            const status = stepStatuses.get(idx);
+            if (status) {
+              return {
                 ...log,
-                status: 'running',
+                status: status === 'passed' ? 'passed' : status === 'failed' ? 'failed' : 'running',
                 timestamp: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-              }
-            : log,
-        ),
-      }));
-      await sleep(520 + index * 90);
-      const failed = index === currentSteps.length - 1;
-      set((state) => ({
-        logs: state.logs.map((log) =>
-          log.stepId === step.id
-            ? {
-                ...log,
-                status: failed ? 'failed' : 'passed',
-                code: 200,
-                duration: [320, 280, 310, 450, 210][index] ?? 280,
-                message: failed ? '断言失败：订单状态仍为"待支付"' : '',
-              }
-            : log,
-        ),
-      }));
+              };
+            }
+            return log;
+          }),
+        }));
+
+        const finalStatus = detail.run.status;
+        if (finalStatus === 'passed') {
+          set({ runState: 'passed' });
+          break;
+        }
+        if (finalStatus === 'failed') {
+          set({ runState: 'failed' });
+          break;
+        }
+      }
+    } catch (err) {
+      console.error('[workflow] CP execution failed:', err);
+      set({ runState: 'failed' });
     }
-    set({ runState: 'failed' });
+
     runningRef.current = false;
   },
 }));

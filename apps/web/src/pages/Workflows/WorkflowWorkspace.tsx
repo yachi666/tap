@@ -192,17 +192,21 @@ function WorkflowCanvas({
   selectedId,
   logs,
   workflowName,
+  runState,
   onSelect,
   onAdd,
   onBack,
+  onRun,
 }: {
   steps: WorkflowStep[];
   selectedId: string;
   logs: ExecutionLog[];
   workflowName: string;
+  runState: string;
   onSelect: (id: string) => void;
   onAdd: () => void;
   onBack: () => void;
+  onRun: () => void;
 }) {
   const statusMap = useMemo(() => new Map(logs.map((log) => [log.stepId, log.status])), [logs]);
   return (
@@ -272,6 +276,16 @@ function WorkflowCanvas({
             <XCircle size={16} weight="fill" /> 断言失败
           </span>
         </div>
+        <button
+          className={`button button--primary${runState === 'running' ? ' button--loading' : ''}`}
+          type="button"
+          onClick={onRun}
+          disabled={runState === 'running'}
+          style={{ marginRight: 8 }}
+        >
+          <Lightning size={20} />
+          {runState === 'running' ? '执行中...' : '运行'}
+        </button>
         <button className="add-step-button" type="button" onClick={onAdd}>
           <Plus size={20} /> 添加步骤
         </button>
@@ -568,6 +582,8 @@ export function WorkflowWorkspace() {
   const setSelectedId = useWorkflowStore((s) => s.setSelectedId);
   const logs = useWorkflowStore((s) => s.logs);
   const backToList = useWorkflowStore((s) => s.backToList);
+  const runState = useWorkflowStore((s) => s.runState);
+  const runWorkflow = useWorkflowStore((s) => s.runWorkflow);
   const activeWorkflowId = useWorkflowStore((s) => s.activeWorkflowId);
   const apiEndpoints = useApiStore((s) => s.apiEndpoints);
 
@@ -639,9 +655,11 @@ export function WorkflowWorkspace() {
           selectedId={selectedId}
           logs={logs}
           workflowName={workflowName}
+          runState={runState}
           onSelect={setSelectedId}
           onAdd={() => setPickerOpen(true)}
           onBack={backToList}
+          onRun={runWorkflow}
         />
         <Inspector step={selectedStep} onChange={updateSelected} onDelete={deleteStep} />
       </div>
