@@ -19,7 +19,7 @@
     "@sketch-test/runner-protocol": "workspace:*",
     "@sketch-test/test-dsl": "workspace:*",
     "@sketch-test/adapter-openapi": "workspace:*",
-    "fastify": "^5.0.0",
+    "fastify": "^5.9.0",
     "pg": "^8.13.0",
     "zod": "catalog:"
   },
